@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { MOCK_SCHEDULE, TARGET_SCORE_PCT } from '../config.js';
+import { persistAttempt } from '../lib/supabase.js';
 
 const STORAGE_KEY = 'aist-ace-progress-v1';
 
@@ -45,6 +46,10 @@ export function ProgressProvider({ children }) {
         mockResults: { ...s.mockResults, [mockId]: { ...payload, completedAt: new Date().toISOString() } },
         sectionAccuracy
       };
+    });
+    // Async persist to Supabase
+    persistAttempt(payload).then(res => {
+      if (!res.ok) console.warn('Supabase sync failed:', res.reason);
     });
   }, []);
 
