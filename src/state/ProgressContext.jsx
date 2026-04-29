@@ -8,7 +8,7 @@ const ProgressContext = createContext(null);
 
 const defaultState = {
   // sectionAccuracy: 0-100 per section
-  sectionAccuracy: { A: 28, B: 42, C: 22, D: 31 },
+  sectionAccuracy: { A: 0, B: 0, C: 0, D: 0 },
   // mockResults: { [mockId]: { score, marks, total, sectionScores, completedAt } }
   mockResults: {},
   streak: 1,

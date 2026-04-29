@@ -154,16 +154,23 @@ function ReviewItem({ q, index, userAnswer, passage }) {
   const isSkipped = userAnswer == null;
   const video = videoForTag(q.tag);
 
-  const [aiText, setAiText] = useState(null);
+  const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
   async function fetchAI() {
     setAiLoading(true);
-    setAiText(null);
+    setAiData(null);
     const res = await askExplanation({
-      question: q.text, options: q.options, correctIndex: q.correct, userIndex: userAnswer, tag: q.tag
+      question: q.text, 
+      options: q.options, 
+      correctIndex: q.correct, 
+      userIndex: userAnswer, 
+      section: q.section, // Pass section
+      tag: q.tag,
+      difficulty: q.difficulty,
+      attemptNumber: 3 // Review mode always shows full explanation
     });
-    setAiText(res.text);
+    if (res.ok) setAiData(res.data);
     setAiLoading(false);
   }
 
@@ -225,14 +232,51 @@ function ReviewItem({ q, index, userAnswer, passage }) {
         </button>
       </div>
 
-      {aiText && (
+      {aiData && (
         <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-          className="mt-3 p-4 rounded-xl border border-accent/30 bg-accent/5"
+          className="mt-3 p-4 rounded-xl border border-accent/30 bg-accent/5 space-y-3"
         >
           <div className="flex items-center gap-2 text-accent text-xs font-semibold uppercase tracking-[0.12em] mb-1">
-            <Sparkles size={12} /> AI Tutor
+            <Sparkles size={12} /> AIST Ace AI Tutor
           </div>
-          <p className="text-sm leading-relaxed whitespace-pre-line text-ink">{aiText}</p>
+          
+          <div className="font-semibold text-white">{aiData.feedback}</div>
+          
+          {aiData.why && (
+            <div className="text-sm">
+              <span className="text-ink-dim font-medium">Logic: </span>
+              <span className="text-ink-muted">{aiData.why}</span>
+            </div>
+          )}
+
+          {aiData.mistake_analysis && (
+            <div className="p-2 rounded bg-danger/5 border border-danger/10 text-xs">
+              <span className="text-danger font-bold uppercase text-[9px] block mb-1">Mistake Analysis</span>
+              <span className="text-ink-muted italic">{aiData.mistake_analysis}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            {aiData.exam_tip && (
+              <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                <div className="text-[9px] font-bold text-accent uppercase mb-1">Exam Logic</div>
+                <div className="text-xs text-ink-muted">{aiData.exam_tip}</div>
+              </div>
+            )}
+            {aiData.deep_dive && (
+              <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                <div className="text-[9px] font-bold text-success uppercase mb-1">Deep Dive</div>
+                <div className="text-xs text-ink-muted">{aiData.deep_dive}</div>
+              </div>
+            )}
+          </div>
+
+          {aiData.mini_challenge && (
+            <div className="mt-2 p-3 rounded-lg bg-accent/10 border border-accent/30 border-dashed">
+              <div className="text-[9px] font-bold text-accent uppercase mb-1">Mini Challenge</div>
+              <div className="text-xs text-white font-medium italic">{aiData.mini_challenge}</div>
+            </div>
+          )}
         </motion.div>
       )}
     </Card>

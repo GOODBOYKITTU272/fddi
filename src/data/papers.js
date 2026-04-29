@@ -1,19 +1,23 @@
 import { paper1 } from './paper1/index.js';
+import { paper2 } from './paper2/index.js';
+import { paper3 } from './paper3/index.js';
+import { paper4 } from './paper4/index.js';
+import { paper5 } from './paper5/index.js';
+import { paper6 } from './paper6/index.js';
 
-// Papers 2–6 will be added in subsequent sessions before each scheduled mock date.
-// For now Mock 1 is the diagnostic — the engine reads the same shape for all papers.
+// Fully populated 175-question mocks for the FDDI AIST M.Des/MBA program.
 export const papers = {
-  1: paper1
-  // 2: paper2,  // delivered before May 1
-  // 3: paper3,  // delivered before May 3
-  // 4: paper4,
-  // 5: paper5,
-  // 6: paper6,
+  1: paper1,
+  2: paper2,
+  3: paper3,
+  4: paper4,
+  5: paper5,
+  6: paper6
 };
 
 export function getPaper(id) {
   const p = papers[Number(id)];
   if (p) return p;
-  // Fallback: clone Mock 1 with new id so the app remains usable for the 5 placeholder mocks
+  // Fallback: if paper doesn't exist, return a placeholder
   return { ...paper1, id: Number(id), title: `Mock ${id} — Coming Soon`, isPlaceholder: true };
 }

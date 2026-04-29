@@ -5,6 +5,10 @@ export function useTimer(durationSec, { onExpire } = {}) {
   const expiredRef = useRef(false);
 
   useEffect(() => {
+    setRemaining(durationSec);
+  }, [durationSec]);
+
+  useEffect(() => {
     if (remaining <= 0) {
       if (!expiredRef.current) {
         expiredRef.current = true;

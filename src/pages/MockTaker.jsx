@@ -32,10 +32,14 @@ export default function MockTaker() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [aiText, setAiText] = useState(null);
+  const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [attempts, setAttempts] = useState({}); // { qid: number }
 
-  const remaining = useTimer(MOCK_DURATION_MIN * 60, {
+  const isDrill = limit != null;
+  const drillDurationSec = isDrill ? limit * 60 : MOCK_DURATION_MIN * 60;
+
+  const remaining = useTimer(drillDurationSec, {
     onExpire: () => submit(true)
   });
 
@@ -96,13 +100,13 @@ export default function MockTaker() {
   function gotoIndex(i) {
     setActiveIndex(Math.max(0, Math.min(adaptedSectionList.length - 1, i)));
     setShowFeedback(false);
-    setAiText(null);
+    setAiData(null);
   }
   function gotoSection(code) {
     setActiveSection(code);
     setActiveIndex(0);
     setShowFeedback(false);
-    setAiText(null);
+    setAiData(null);
   }
   function next() {
     if (activeIndex < adaptedSectionList.length - 1) {
@@ -127,34 +131,51 @@ export default function MockTaker() {
   const submit = useCallback((forced = false) => {
     let totalMarks = 0;
     let earnedMarks = 0;
-    const sectionScores = {};
-    sectionOrder.forEach((code) => {
-      const list = paper.sections[code];
-      let total = 0, earned = 0, correct = 0, attempted = 0;
-      list.forEach((q) => {
-        total += q.marks;
-        if (answers[q.id] != null) {
-          attempted++;
-          if (answers[q.id] === q.correct) {
-            earned += q.marks;
-            correct++;
-          }
-        }
+    if (isDrill) {
+      const earned = sectionList.reduce((s, q) => s + (answers[q.id] === q.correct ? q.marks : 0), 0);
+      const total = sectionList.reduce((s, q) => s + q.marks, 0);
+      const score = total ? (earned / total) * 100 : 0;
+      
+      recordMockAttempt(paper.id, {
+        mockId: paper.id,
+        score,
+        marks: earned,
+        total: total,
+        sectionScores: { [activeSection]: score },
+        answers,
+        forced,
+        isDrill: true
       });
-      totalMarks += total;
-      earnedMarks += earned;
-      sectionScores[code] = list.length ? Math.round((correct / list.length) * 100) : 0;
-    });
-    const score = totalMarks ? (earnedMarks / totalMarks) * 100 : 0;
-    recordMockAttempt(paper.id, {
-      mockId: paper.id,
-      score,
-      marks: earnedMarks,
-      total: totalMarks,
-      sectionScores,
-      answers,
-      forced
-    });
+    } else {
+      const sectionScores = {};
+      sectionOrder.forEach((code) => {
+        const list = paper.sections[code];
+        let total = 0, earned = 0, correct = 0, attempted = 0;
+        list.forEach((q) => {
+          total += q.marks;
+          if (answers[q.id] != null) {
+            attempted++;
+            if (answers[q.id] === q.correct) {
+              earned += q.marks;
+              correct++;
+            }
+          }
+        });
+        totalMarks += total;
+        earnedMarks += earned;
+        sectionScores[code] = list.length ? Math.round((correct / list.length) * 100) : 0;
+      });
+      const score = totalMarks ? (earnedMarks / totalMarks) * 100 : 0;
+      recordMockAttempt(paper.id, {
+        mockId: paper.id,
+        score,
+        marks: earnedMarks,
+        total: totalMarks,
+        sectionScores,
+        answers,
+        forced
+      });
+    }
     nav(`/review/${paper.id}`);
   }, [answers, paper, nav, recordMockAttempt]);
 
@@ -171,8 +192,10 @@ export default function MockTaker() {
   });
 
   const totalAttempted = Object.keys(answers).length;
-  const isDrill = limit != null;
   const totalQuestions = isDrill ? limit : sectionOrder.reduce((s, code) => s + paper.sections[code].length, 0);
+  const totalPaperMarks = isDrill 
+    ? sectionList.reduce((s, q) => s + q.marks, 0)
+    : sectionOrder.reduce((s, code) => s + paper.sections[code].reduce((m, q) => m + q.marks, 0), 0);
   const lowTime = remaining < 600; // last 10 min
 
   return (
@@ -186,7 +209,7 @@ export default function MockTaker() {
           <div>
             <div className="font-semibold tracking-tight">{paper.title}</div>
             <div className="text-xs text-ink-muted">
-              {paper.isPlaceholder ? 'Preview using Mock 1 — full paper drops before scheduled date' : paper.difficulty + ' · ' + totalQuestions + ' Qs · 200 marks'}
+              {paper.isPlaceholder ? 'Preview using Mock 1 — full paper drops before scheduled date' : paper.difficulty + ' · ' + totalQuestions + ' Qs · ' + totalPaperMarks + ' marks'}
             </div>
           </div>
         </div>
@@ -345,22 +368,88 @@ export default function MockTaker() {
                       className="btn-secondary text-xs py-1.5" 
                       onClick={async () => {
                         setAiLoading(true);
+                        const qid = adaptedQ.id;
+                        const currentAttempts = (attempts[qid] || 0) + 1;
+                        setAttempts(prev => ({ ...prev, [qid]: currentAttempts }));
+
                         const res = await askExplanation({
-                          question: adaptedQ.text, options: adaptedQ.options, correctIndex: adaptedQ.correct, userIndex: answers[adaptedQ.id], tag: adaptedQ.tag
+                          question: adaptedQ.text, 
+                          options: adaptedQ.options, 
+                          correctIndex: adaptedQ.correct, 
+                          userIndex: answers[qid], 
+                          section: activeSection,
+                          tag: adaptedQ.tag,
+                          difficulty: adaptedQ.difficulty,
+                          attemptNumber: currentAttempts
                         });
-                        setAiText(res.text);
+                        if (res.ok) setAiData(res.data);
                         setAiLoading(false);
                       }}
                       disabled={aiLoading}
                     >
-                      <Sparkles size={14} /> {aiLoading ? 'Thinking...' : 'AI Deep Dive'}
+                      <Sparkles size={14} /> {aiLoading ? 'Tutor is thinking...' : 'AI Deep Dive'}
                     </button>
                   </div>
 
-                  {aiText && (
-                    <div className="p-4 rounded-xl bg-accent/5 border border-accent/20 text-sm leading-relaxed">
-                      <div className="text-accent text-[10px] font-bold uppercase mb-1">AI Tutor</div>
-                      {aiText}
+                  {aiData && (
+                    <div className="space-y-3 mt-4">
+                      <div className="p-4 rounded-xl bg-accent/5 border border-accent/20 text-sm leading-relaxed">
+                        <div className="flex items-center gap-2 text-accent text-[10px] font-bold uppercase mb-2">
+                          <Sparkles size={12} /> AIST Ace AI Tutor
+                        </div>
+                        
+                        <div className="font-semibold text-white mb-2">{aiData.feedback}</div>
+                        
+                        {aiData.why && (
+                          <div className="mb-3">
+                            <span className="text-ink-dim font-medium">Logic: </span>
+                            <span className="text-ink-muted">{aiData.why}</span>
+                          </div>
+                        )}
+
+                        {aiData.mistake_analysis && (
+                          <div className="mb-3 p-2 rounded bg-danger/5 border border-danger/10 text-xs">
+                            <span className="text-danger font-bold uppercase text-[9px] block mb-1">Mistake Analysis</span>
+                            <span className="text-ink-muted italic">{aiData.mistake_analysis}</span>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                          {aiData.exam_tip && (
+                            <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                              <div className="text-[9px] font-bold text-accent uppercase mb-1">Exam Logic</div>
+                              <div className="text-xs text-ink-muted">{aiData.exam_tip}</div>
+                            </div>
+                          )}
+                          {aiData.deep_dive && (
+                            <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                              <div className="text-[9px] font-bold text-success uppercase mb-1">Deep Dive</div>
+                              <div className="text-xs text-ink-muted">{aiData.deep_dive}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        {aiData.mini_challenge && (
+                          <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/30 border-dashed">
+                            <div className="text-[9px] font-bold text-accent uppercase mb-1">Mini Challenge</div>
+                            <div className="text-xs text-white font-medium italic">{aiData.mini_challenge}</div>
+                          </div>
+                        )}
+
+                        {aiData.status === 'retry_needed' && (
+                          <div className="mt-4 flex justify-center">
+                            <button 
+                              className="btn-primary text-xs px-6"
+                              onClick={() => {
+                                setShowFeedback(false);
+                                setAiData(null);
+                              }}
+                            >
+                              Try Again
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </motion.div>

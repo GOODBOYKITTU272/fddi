@@ -14,14 +14,13 @@ export default function App() {
       <Routes>
         {/* Mock taker is full-screen — no shell */}
         <Route path="/mock/:id" element={<MockTaker />} />
-        <Route path="/review/:id" element={<Review />} />
-
         {/* Shell routes */}
         <Route element={<AppShell />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/plan" element={<Plan />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/review/:id" element={<Review />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
