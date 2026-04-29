@@ -98,6 +98,72 @@ const paperFoldQuestion = svg(`
   </g>
 `, '0 0 320 120');
 
+// Onion cross-section (concentric rings) — Section D Q30
+const onionCross = svg(`
+  <g transform="translate(160,80)" fill="none" stroke="#D7AB66">
+    <circle r="60" stroke-width="2.5"/>
+    <circle r="50" stroke-width="2"/>
+    <circle r="40" stroke-width="2"/>
+    <circle r="30" stroke-width="2"/>
+    <circle r="20" stroke-width="2"/>
+    <circle r="10" stroke-width="2"/>
+    <circle r="3" fill="#A87935" stroke="none"/>
+  </g>
+`, '0 0 320 160');
+
+// Cucumber cross-section (oval with seeds) — Section D Q31
+const cucumberCross = svg(`
+  <g transform="translate(160,80)">
+    <ellipse rx="80" ry="46" fill="none" stroke="#7CB36A" stroke-width="2"/>
+    <ellipse rx="60" ry="30" fill="#C8E0BD" stroke="#5BA85B" stroke-width="1.5"/>
+    <g fill="#3F7C3F">
+      ${Array.from({length:14}, (_,i) => {
+        const a = (i/14) * Math.PI*2;
+        return `<ellipse cx="${Math.cos(a)*30}" cy="${Math.sin(a)*16}" rx="3" ry="2"/>`;
+      }).join('')}
+    </g>
+  </g>
+`, '0 0 320 160');
+
+// Capsicum cross-section (3-chamber star with seeds) — Section D
+const capsicumCross = svg(`
+  <g transform="translate(160,80)">
+    <circle r="60" fill="none" stroke="#C44141" stroke-width="2.5"/>
+    <circle r="48" fill="#F4C7C7" stroke="#A33636" stroke-width="1"/>
+    <g fill="none" stroke="#A33636" stroke-width="2">
+      <line x1="0" y1="0" x2="0" y2="-44"/>
+      <line x1="0" y1="0" x2="38" y2="22"/>
+      <line x1="0" y1="0" x2="-38" y2="22"/>
+      <path d="M0,-30 Q14,-22 14,-10 Q14,2 0,2 Q-14,2 -14,-10 Q-14,-22 0,-30 Z" fill="#FFF1E0" stroke="#A33636"/>
+    </g>
+    <g fill="#E5C97A">
+      <ellipse cx="-2" cy="-14" rx="2" ry="3"/>
+      <ellipse cx="4" cy="-10" rx="2" ry="3"/>
+      <ellipse cx="-6" cy="-6" rx="2" ry="3"/>
+    </g>
+  </g>
+`, '0 0 320 160');
+
+// Tomato cross-section (locules with seeds) — alternative
+const tomatoCross = svg(`
+  <g transform="translate(160,80)">
+    <circle r="62" fill="#E84545" stroke="#A82828" stroke-width="2.5"/>
+    <circle r="55" fill="#F09090" stroke="#A82828" stroke-width="1"/>
+    <g fill="#FFF6BB" stroke="#C8A040" stroke-width="1.5">
+      <ellipse cx="-22" cy="-22" rx="14" ry="11"/>
+      <ellipse cx="22" cy="-22" rx="14" ry="11"/>
+      <ellipse cx="-22" cy="22" rx="14" ry="11"/>
+      <ellipse cx="22" cy="22" rx="14" ry="11"/>
+      <ellipse cx="0" cy="0" rx="10" ry="9"/>
+    </g>
+    <g fill="#A8723E">
+      ${[[-22,-22],[22,-22],[-22,22],[22,22],[0,0]].flatMap(([cx,cy]) =>
+        [-4,0,4].map(dx => `<ellipse cx="${cx+dx}" cy="${cy}" rx="1.5" ry="2.5"/>`)
+      ).join('')}
+    </g>
+  </g>
+`, '0 0 320 160');
+
 // Sneaker wireframe matching Section D Q40
 const shoeDiagram = svg(`
   <g fill="none" stroke="#F4F5FB" stroke-width="1.5">
@@ -119,6 +185,8 @@ const figures = {
   '1D27': { type: 'svg', svg: dotAnalogy,         caption: 'Visual analogy' },
   '1D28': { type: 'svg', svg: patternCircles,     caption: 'Pattern series' },
   '1D29': { type: 'image', src: localImgs.ladyFinger, alt: 'Lady Finger Cross-section' },
+  '1D30': { type: 'svg', svg: onionCross,         caption: 'Vegetable cross-section — concentric rings' },
+  '1D31': { type: 'svg', svg: cucumberCross,      caption: 'Vegetable cross-section — oval with seeds' },
   '1D32': { type: 'svg', svg: paperFoldQuestion,  caption: 'Paper folding logic' },
   '1D33': { type: 'svg', svg: paperFoldQuestion,  caption: 'Diagonal fold logic' },
   '1D34': { type: 'svg', svg: paperFoldQuestion,  caption: 'Triple fold logic' },
