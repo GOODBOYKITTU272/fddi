@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { getPaper } from '../data/papers.js';
 import { useProgress } from '../state/ProgressContext.jsx';
 import { Card, Chip, Progress } from '../components/ui.jsx';
+import { Figure } from '../components/Figure.jsx';
 import { SECTIONS } from '../config.js';
 import { videoForTag } from '../data/youtube.js';
 import { askExplanation } from '../lib/openai.js';
@@ -190,6 +191,8 @@ function ReviewItem({ q, index, userAnswer, passage }) {
       )}
 
       <p className="text-sm md:text-base leading-relaxed whitespace-pre-line">{q.text}</p>
+
+      <Figure questionId={q.id} />
 
       <div className="mt-4 grid gap-2">
         {q.options.map((opt, i) => {

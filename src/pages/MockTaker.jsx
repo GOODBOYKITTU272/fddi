@@ -7,6 +7,8 @@ import { SECTIONS, MOCK_DURATION_MIN } from '../config.js';
 import { useTimer, fmtTime } from '../hooks/useTimer.js';
 import { useProgress } from '../state/ProgressContext.jsx';
 import { Chip } from '../components/ui.jsx';
+import { Figure } from '../components/Figure.jsx';
+import { figureFor } from '../data/figures.js';
 import { videoForTag } from '../data/youtube.js';
 import { askExplanation } from '../lib/openai.js';
 import { Youtube, Sparkles } from 'lucide-react';
@@ -281,6 +283,14 @@ export default function MockTaker() {
               </div>
 
               <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">{adaptedQ.text}</p>
+
+              {adaptedQ.image && !figureFor(adaptedQ.id) && (
+                <figure className="my-4">
+                  <img src={adaptedQ.image} alt="Question figure" className="rounded-xl border border-hairline max-h-72 object-contain bg-elevated" />
+                </figure>
+              )}
+
+              <Figure questionId={adaptedQ.id} />
 
               <div className="mt-6 grid gap-2">
                 {adaptedQ.options.map((opt, i) => {

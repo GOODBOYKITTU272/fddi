@@ -11,6 +11,6 @@
  *  - explanation  short textual rationale
  *  - passageRef   optional: id of an RC passage to show with this question
  */
-export const q = (id, section, text, options, correct, explanation, { difficulty = 1, marks = 1, tag = '', passageRef = null } = {}) => ({
-  id, section, text, options, correct: correct - 1, explanation, difficulty, marks, tag, passageRef
+export const q = (id, section, text, options, correct, explanation, { difficulty = 1, marks = 1, tag = '', passageRef = null, image = null } = {}) => ({
+  id, section, text, options, correct: correct - 1, explanation, difficulty, marks, tag, passageRef, image
 });
