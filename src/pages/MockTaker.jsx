@@ -7,6 +7,9 @@ import { SECTIONS, MOCK_DURATION_MIN } from '../config.js';
 import { useTimer, fmtTime } from '../hooks/useTimer.js';
 import { useProgress } from '../state/ProgressContext.jsx';
 import { Chip } from '../components/ui.jsx';
+import { videoForTag } from '../data/youtube.js';
+import { askExplanation } from '../lib/openai.js';
+import { Youtube, Sparkles } from 'lucide-react';
 
 const sectionOrder = ['A', 'B', 'C', 'D'];
 
@@ -26,6 +29,9 @@ export default function MockTaker() {
   const [marked, setMarked] = useState(new Set());
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [aiText, setAiText] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const remaining = useTimer(MOCK_DURATION_MIN * 60, {
     onExpire: () => submit(true)
@@ -66,7 +72,9 @@ export default function MockTaker() {
   const adaptedQ = adaptedSectionList[activeIndex];
 
   function selectOption(idx) {
+    if (showFeedback) return; // Prevent double selecting in feedback mode
     setAnswers((a) => ({ ...a, [adaptedQ.id]: idx }));
+    if (isDrill) setShowFeedback(true);
   }
   function toggleMark() {
     setMarked((m) => {
@@ -85,10 +93,14 @@ export default function MockTaker() {
   }
   function gotoIndex(i) {
     setActiveIndex(Math.max(0, Math.min(adaptedSectionList.length - 1, i)));
+    setShowFeedback(false);
+    setAiText(null);
   }
   function gotoSection(code) {
     setActiveSection(code);
     setActiveIndex(0);
+    setShowFeedback(false);
+    setAiText(null);
   }
   function next() {
     if (activeIndex < adaptedSectionList.length - 1) {
@@ -273,21 +285,29 @@ export default function MockTaker() {
               <div className="mt-6 grid gap-2">
                 {adaptedQ.options.map((opt, i) => {
                   const selected = answers[adaptedQ.id] === i;
+                  const isCorrect = i === adaptedQ.correct;
+                  let cls = 'border-hairline';
+                  
+                  if (showFeedback) {
+                    if (isCorrect) cls = 'border-success bg-success/10 text-success';
+                    else if (selected) cls = 'border-danger bg-danger/10 text-danger';
+                  } else if (selected) {
+                    cls = 'border-accent bg-accent/10 text-white';
+                  }
+
                   return (
                     <button
                       key={i}
+                      disabled={showFeedback}
                       onClick={() => selectOption(i)}
                       className={
-                        'flex items-center gap-3 w-full text-left p-4 rounded-xl border transition ' +
-                        (selected
-                          ? 'border-accent bg-accent/10 text-white'
-                          : 'border-hairline hover:border-accent/50 hover:bg-elevated/40')
+                        'flex items-center gap-3 w-full text-left p-4 rounded-xl border transition ' + cls
                       }
                     >
                       <span
                         className={
                           'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ' +
-                          (selected ? 'bg-accent text-white' : 'bg-elevated text-ink-muted border border-hairline')
+                          (selected || (showFeedback && isCorrect) ? 'bg-current text-canvas' : 'bg-elevated text-ink-muted border border-hairline')
                         }
                       >
                         {String.fromCharCode(65 + i)}
@@ -297,6 +317,44 @@ export default function MockTaker() {
                   );
                 })}
               </div>
+
+              {showFeedback && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4 pt-6 border-t border-hairline">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-bold uppercase tracking-wider">Explanation</div>
+                    {videoForTag(adaptedQ.tag) && (
+                      <a href={videoForTag(adaptedQ.tag).url} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs text-danger">
+                        <Youtube size={14} className="mr-1" /> Watch Guide
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-sm leading-relaxed text-ink-muted">{adaptedQ.explanation}</p>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      className="btn-secondary text-xs py-1.5" 
+                      onClick={async () => {
+                        setAiLoading(true);
+                        const res = await askExplanation({
+                          question: adaptedQ.text, options: adaptedQ.options, correctIndex: adaptedQ.correct, userIndex: answers[adaptedQ.id], tag: adaptedQ.tag
+                        });
+                        setAiText(res.text);
+                        setAiLoading(false);
+                      }}
+                      disabled={aiLoading}
+                    >
+                      <Sparkles size={14} /> {aiLoading ? 'Thinking...' : 'AI Deep Dive'}
+                    </button>
+                  </div>
+
+                  {aiText && (
+                    <div className="p-4 rounded-xl bg-accent/5 border border-accent/20 text-sm leading-relaxed">
+                      <div className="text-accent text-[10px] font-bold uppercase mb-1">AI Tutor</div>
+                      {aiText}
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </motion.div>
           </AnimatePresence>
 

@@ -107,7 +107,10 @@ export default function Stats() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <Chip tone="neutral">Section {v.section}</Chip>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Chip tone="neutral">Section {v.section}</Chip>
+                    {v.channel && <span className="text-[10px] uppercase tracking-[0.1em] text-danger font-semibold">{v.channel}</span>}
+                  </div>
                   <div className="font-semibold mt-2 group-hover:text-accent transition">{v.title}</div>
                   <div className="text-xs text-ink-muted mt-1">{v.duration} · {v.topic}</div>
                 </div>
