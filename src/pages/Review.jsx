@@ -20,15 +20,20 @@ const filterModes = [
 export default function Review() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { mockResults } = useProgress();
+  const { attempts, mockResults } = useProgress();
 
-  // Drills use unique keys like "drill-1714567890123", full mocks use paper ID like "1"
-  // Try the URL id first (for drills), then fall back to numeric paper ID (for mocks)
-  const result = mockResults[id] || mockResults[Number(id)];
+  // 1. Try to find the specific attempt by ID
+  // 2. Fallback to the latest mock result for a paper (for direct navigation to /review/1)
+  const result = useMemo(() => {
+    const byId = attempts.find(a => a.attemptId === id);
+    if (byId) return byId;
+    return mockResults[Number(id)];
+  }, [attempts, id, mockResults]);
+
   const isDrillResult = result?.isDrill;
 
-  // Load the paper from the result's mockId (drills store this), or from the URL id
-  const paperId = result?.mockId || id;
+  // Load the paper from the result's mockId, or from the URL id as fallback
+  const paperId = result?.mockId || (isNaN(Number(id)) ? 1 : Number(id));
   const paper = useMemo(() => getPaper(paperId), [paperId]);
 
   // For drills: find the actual questions from the paper that were part of the drill

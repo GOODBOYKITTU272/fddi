@@ -1,7 +1,8 @@
 // Central app config
 export const EXAM_DATE = '2026-05-10T09:30:00+05:30';
 export const TARGET_SCORE_PCT = 80;
-export const STUDENT_NAME = 'Champion';
+export const PLAYER_NAME = 'Pranavi';
+export const PASSING_SCORE = 50;
 
 // Section metadata
 export const SECTIONS = {

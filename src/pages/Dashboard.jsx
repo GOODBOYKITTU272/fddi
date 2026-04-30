@@ -65,11 +65,11 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="bg-white/5 backdrop-blur-md p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10">
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1">Streak</p>
-              <p className="text-2xl sm:text-3xl font-bold text-white">3 Days</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">{streak} Days</p>
             </div>
             <div className="bg-white/5 backdrop-blur-md p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10">
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1">Avg Score</p>
-              <p className="text-2xl sm:text-3xl font-bold text-white">0%</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">{Math.round(overallAccuracy)}%</p>
             </div>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function Dashboard() {
                     className={`flex items-center gap-1 text-sm font-bold transition-all ${
                       result || isNext ? 'text-accent hover:text-white' : 'text-ink-dim'
                     }`}
-                    onClick={() => nav(result ? `/review/${mock.id}` : `/mock/${mock.id}`)}
+                    onClick={() => nav(result ? `/review/${result.attemptId}` : `/mock/${mock.id}`)}
                     disabled={!result && !isNext}
                   >
                     {result ? 'Review' : isNext ? 'Start Test' : 'Upcoming'}

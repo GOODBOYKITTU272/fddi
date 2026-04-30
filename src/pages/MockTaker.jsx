@@ -161,10 +161,11 @@ export default function MockTaker() {
         drillSectionScores[code] = Math.round((modCorrect / modQs.length) * 100);
       });
 
-      // Use unique drill key so drills don't overwrite each other or full mock results
-      const resultKey = drillKeyRef.current;
-      recordMockAttempt(resultKey, {
-        mockId: paper.id,
+      // Use unique attempt ID for this session
+      const attemptId = `att-${Date.now()}`;
+      recordMockAttempt({
+        attemptId,
+        mockId: Number(paper.id),
         score,
         marks: earned,
         total: total,
@@ -173,8 +174,10 @@ export default function MockTaker() {
         forced,
         isDrill: true,
         drillQuestions: sectionList.map(q => q.id),
-        drillModules: mods
+        drillModules: mods,
+        startedAt: startTimeRef.current
       });
+      nav(`/review/${attemptId}`);
     } else {
       const sectionScores = {};
       sectionOrder.forEach((code) => {
@@ -195,18 +198,21 @@ export default function MockTaker() {
         sectionScores[code] = list.length ? Math.round((correct / list.length) * 100) : 0;
       });
       const score = totalMarks ? (earnedMarks / totalMarks) * 100 : 0;
-      recordMockAttempt(paper.id, {
-        mockId: paper.id,
+      
+      const attemptId = `att-${Date.now()}`;
+      recordMockAttempt({
+        attemptId,
+        mockId: Number(paper.id),
         score,
         marks: earnedMarks,
         total: totalMarks,
         sectionScores,
         answers,
-        forced
+        forced,
+        startedAt: startTimeRef.current
       });
+      nav(`/review/${attemptId}`);
     }
-    // Navigate: drills use their unique key, full mocks use paper.id
-    nav(isDrill ? `/review/${drillKeyRef.current}` : `/review/${paper.id}`);
     // Finish Supabase drill session
     if (isSmart && sessionIdRef.current) {
       const c = sectionList.filter(q => answers[q.id] === q.correct).length;
