@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Check, X, Sparkles, Youtube, ArrowLeft, Filter } from 'lucide-react';
+import { Check, X, Sparkles, Youtube, ArrowLeft, Filter, Zap, Trophy, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getPaper } from '../data/papers.js';
 import { useProgress } from '../state/ProgressContext.jsx';
@@ -9,6 +9,7 @@ import { Figure } from '../components/Figure.jsx';
 import { SECTIONS } from '../config.js';
 import { videoForTag } from '../data/youtube.js';
 import { askExplanation } from '../lib/openai.js';
+import { PLAYER_NAME } from '../lib/supabase.js';
 
 const filterModes = [
   { id: 'all', label: 'All' },
@@ -22,7 +23,27 @@ export default function Review() {
   const paper = useMemo(() => getPaper(id), [id]);
   const { mockResults } = useProgress();
   const result = mockResults[paper.id];
-  const [activeSection, setActiveSection] = useState('A');
+  const isDrillResult = result?.isDrill;
+
+  // For drills: find the actual questions from the paper that were part of the drill
+  const drillQuestionIds = useMemo(() => new Set(result?.drillQuestions || []), [result]);
+  const drillModules = result?.drillModules || [];
+
+  // Build the drill question list from the paper data
+  const drillQuestionList = useMemo(() => {
+    if (!isDrillResult || !drillQuestionIds.size) return [];
+    const allQs = [];
+    Object.values(paper.sections).forEach(sectionQs => {
+      sectionQs.forEach(q => {
+        if (drillQuestionIds.has(q.id)) allQs.push(q);
+      });
+    });
+    return allQs;
+  }, [isDrillResult, drillQuestionIds, paper]);
+
+  const [activeSection, setActiveSection] = useState(
+    isDrillResult && drillModules.length ? drillModules[0] : 'A'
+  );
   const [filter, setFilter] = useState('all');
 
   if (!result) {
@@ -34,6 +55,171 @@ export default function Review() {
       </div>
     );
   }
+
+  // ── Drill Review Mode ─────────────────────────────────────────────────────
+  if (isDrillResult) {
+    const drillCorrect = drillQuestionList.filter(q => result.answers?.[q.id] === q.correct).length;
+    const drillWrong = drillQuestionList.filter(q => result.answers?.[q.id] != null && result.answers?.[q.id] !== q.correct).length;
+    const drillSkipped = drillQuestionList.filter(q => result.answers?.[q.id] == null).length;
+    const drillPct = drillQuestionList.length ? Math.round((drillCorrect / drillQuestionList.length) * 100) : 0;
+
+    // Per-module stats for the drill
+    const modStats = {};
+    drillModules.forEach(code => {
+      const modQs = drillQuestionList.filter(q => (q.section || code) === code);
+      const correct = modQs.filter(q => result.answers?.[q.id] === q.correct).length;
+      const wrong = modQs.filter(q => result.answers?.[q.id] != null && result.answers?.[q.id] !== q.correct).length;
+      modStats[code] = { correct, wrong, skipped: modQs.length - correct - wrong, total: modQs.length };
+    });
+
+    // Filter drill questions by active module and filter mode
+    const activeModQs = drillQuestionList.filter(q => (q.section || drillModules[0]) === activeSection);
+    const filteredDrillQs = activeModQs.filter(q => {
+      const a = result.answers?.[q.id];
+      if (filter === 'wrong') return a != null && a !== q.correct;
+      if (filter === 'unattempted') return a == null;
+      return true;
+    });
+
+    const emoji = drillPct >= 80 ? '🏆' : drillPct >= 50 ? '💪' : '🌱';
+    const verdict = drillPct >= 80
+      ? `Outstanding, ${PLAYER_NAME}! You crushed this drill!`
+      : drillPct >= 50
+      ? `Great effort, ${PLAYER_NAME}! You're getting stronger!`
+      : `Keep going, ${PLAYER_NAME}! Every drill makes you better!`;
+
+    return (
+      <div className="min-h-screen bg-canvas">
+        {/* Header */}
+        <header className="border-b border-hairline bg-canvas/85 backdrop-blur-md sticky top-0 z-30">
+          <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-3">
+            <Link to="/" className="btn-ghost text-sm"><ArrowLeft size={14} /> Dashboard</Link>
+            <div className="text-center">
+              <div className="text-xs text-emerald-400 uppercase tracking-[0.12em] flex items-center justify-center gap-1">
+                <Zap size={11} className="fill-current" /> Drill Review
+              </div>
+              <div className="font-bold">{PLAYER_NAME}&apos;s Flash Drill</div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-extrabold">{drillPct}%</div>
+              <div className="text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-5">
+          {/* Motivational verdict */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={'p-5 rounded-2xl border text-center ' +
+              (drillPct >= 80
+                ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-emerald-500/10 border-emerald-500/30'
+                : drillPct >= 50
+                ? 'bg-gradient-to-r from-blue-500/10 via-blue-400/5 to-blue-500/10 border-blue-500/30'
+                : 'bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 border-amber-500/30')}
+          >
+            <div className="text-3xl mb-2">{emoji}</div>
+            <div className="font-bold text-lg text-white">{verdict}</div>
+            <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+              <span className="flex items-center gap-1 text-success font-bold">
+                <Check size={14} /> {drillCorrect} correct
+              </span>
+              <span className="flex items-center gap-1 text-danger font-bold">
+                <X size={14} /> {drillWrong} wrong
+              </span>
+              {drillSkipped > 0 && (
+                <span className="text-ink-dim">{drillSkipped} skipped</span>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Per-module score cards (only the drilled modules) */}
+          <Card>
+            <div className={'grid gap-4 ' + (drillModules.length > 2 ? 'grid-cols-2 md:grid-cols-4' : `grid-cols-${drillModules.length}`)}>
+              {drillModules.map(code => {
+                const s = SECTIONS[code];
+                const stat = modStats[code] || { correct: 0, wrong: 0, skipped: 0, total: 0 };
+                const pct = stat.total ? Math.round((stat.correct / stat.total) * 100) : 0;
+                return (
+                  <div key={code}>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-sm font-semibold">{s.short}</span>
+                      <span className="text-lg font-bold">{pct}%</span>
+                    </div>
+                    <Progress value={pct} color={`bg-${s.color}`} className="mt-2" />
+                    <div className="mt-2 text-[11px] text-ink-dim flex gap-3">
+                      <span><Check size={11} className="inline text-success" /> {stat.correct}</span>
+                      <span><X size={11} className="inline text-danger" /> {stat.wrong}</span>
+                      {stat.skipped > 0 && <span>· skip {stat.skipped}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* Module selector + filter — only show drilled modules */}
+          <div className="flex flex-wrap items-center gap-3 justify-between">
+            <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline">
+              {drillModules.map(code => {
+                const s = SECTIONS[code];
+                return (
+                  <button
+                    key={code}
+                    onClick={() => setActiveSection(code)}
+                    className={'px-3 py-1.5 rounded-full text-xs font-semibold transition ' +
+                      (activeSection === code ? `bg-${s.color}/15 text-${s.color}` : 'text-ink-muted hover:text-white')}
+                  >
+                    {s.short}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline">
+              {filterModes.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setFilter(m.id)}
+                  className={'px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition ' +
+                    (filter === m.id ? 'bg-accent text-white' : 'text-ink-muted hover:text-white')}
+                >
+                  <Filter size={12} /> {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Question list — only drill questions */}
+          <div className="space-y-3">
+            {filteredDrillQs.length === 0 && (
+              <div className="text-center py-10 text-ink-muted text-sm">
+                Nothing here. Try a different filter.
+              </div>
+            )}
+            {filteredDrillQs.map((q, i) => (
+              <ReviewItem
+                key={q.id}
+                index={activeModQs.indexOf(q) + 1}
+                q={q}
+                userAnswer={result.answers?.[q.id]}
+                passage={q.passageRef ? paper.passages?.[q.passageRef] : null}
+              />
+            ))}
+          </div>
+
+          {/* Back to practice */}
+          <div className="text-center py-6">
+            <Link to="/practice" className="btn-primary px-8">
+              <Zap size={14} /> Start Another Drill
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── Full Mock Review Mode (unchanged) ─────────────────────────────────────
 
   const list = paper.sections[activeSection];
   const filtered = list.filter((q) => {

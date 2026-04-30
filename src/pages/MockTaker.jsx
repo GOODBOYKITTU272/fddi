@@ -145,15 +145,27 @@ export default function MockTaker() {
       const total = sectionList.reduce((s, q) => s + q.marks, 0);
       const score = total ? (earned / total) * 100 : 0;
       
+      // Build per-module scores for the drill
+      const drillSectionScores = {};
+      const mods = isSmart ? smartMods : [activeSection];
+      mods.forEach(code => {
+        const modQs = sectionList.filter(q => (q.section || activeSection) === code);
+        if (!modQs.length) return;
+        const modCorrect = modQs.filter(q => answers[q.id] === q.correct).length;
+        drillSectionScores[code] = Math.round((modCorrect / modQs.length) * 100);
+      });
+
       recordMockAttempt(paper.id, {
         mockId: paper.id,
         score,
         marks: earned,
         total: total,
-        sectionScores: { [activeSection]: score },
+        sectionScores: drillSectionScores,
         answers,
         forced,
-        isDrill: true
+        isDrill: true,
+        drillQuestions: sectionList.map(q => q.id),
+        drillModules: mods
       });
     } else {
       const sectionScores = {};
