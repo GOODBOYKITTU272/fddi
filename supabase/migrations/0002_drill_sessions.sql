@@ -32,8 +32,14 @@ create table if not exists public.drill_responses (
   created_at   timestamptz default now()
 );
 
+create index if not exists drill_responses_session_idx on public.drill_responses (session_id);
+
 -- RLS (open for single-user anon mode)
 alter table public.drill_sessions  enable row level security;
 alter table public.drill_responses enable row level security;
+
+drop policy if exists "anon-rw drill_sessions"  on public.drill_sessions;
+drop policy if exists "anon-rw drill_responses" on public.drill_responses;
+
 create policy "anon-rw drill_sessions"  on public.drill_sessions  for all to anon using (true) with check (true);
 create policy "anon-rw drill_responses" on public.drill_responses for all to anon using (true) with check (true);
