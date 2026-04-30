@@ -72,3 +72,31 @@ body {
     @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim;
   }
 }
+
+/* ── Mobile-first responsive overrides ───────────────────────────── */
+
+/* Safe bottom padding for pages with the floating nav */
+.pb-nav-safe {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Minimum touch-target size (WCAG 2.5.8) */
+@media (pointer: coarse) {
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Hide scrollbar on mobile for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent horizontal overflow globally */
+html, body {
+  overflow-x: hidden;
+}

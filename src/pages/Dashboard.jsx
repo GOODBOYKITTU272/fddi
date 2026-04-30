@@ -24,15 +24,15 @@ export default function Dashboard() {
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl p-8 md:p-10 relative overflow-hidden bg-gradient-to-br from-emerald-900 to-slate-950 border border-emerald-500/20"
+        className="rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 relative overflow-hidden bg-gradient-to-br from-emerald-900 to-slate-950 border border-emerald-500/20"
       >
         <div className="absolute inset-0 bg-accent-grad opacity-[0.08]" />
-        <div className="relative z-10 flex flex-col md:flex-row justify-between gap-8">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6 sm:gap-8">
           <div className="max-w-xl">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
               AIST 2026 Preparation
             </h2>
-            <p className="text-emerald-100/70 mb-6">
+            <p className="text-emerald-100/70 mb-4 sm:mb-6 text-sm sm:text-base">
               Targeting FDDI Hyderabad. You need 160/200 to secure your seat.
               The countdown to May 10th is on.
             </p>
@@ -48,9 +48,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
-                className="btn-primary"
+                className="btn-primary text-sm sm:text-base"
                 onClick={() => nav(`/mock/${nextMock.id}`)}
               >
                 <Play size={16} />
@@ -62,14 +62,14 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 min-w-[140px]">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="bg-white/5 backdrop-blur-md p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10">
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1">Streak</p>
-              <p className="text-3xl font-bold text-white">3 Days</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">3 Days</p>
             </div>
-            <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 min-w-[140px]">
+            <div className="bg-white/5 backdrop-blur-md p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10">
               <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1">Avg Score</p>
-              <p className="text-3xl font-bold text-white">0%</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">0%</p>
             </div>
           </div>
         </div>
@@ -80,10 +80,10 @@ export default function Dashboard() {
       </motion.section>
 
       {/* Adaptive Flash Drill - THE NEW SECTION */}
-      <section className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 sm:gap-6">
         <div 
           onClick={() => setIsDrillOpen(true)}
-          className="group cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-white/5 hover:border-accent/40 transition-all p-8 flex flex-col justify-between min-h-[220px]"
+          className="group cursor-pointer relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-white/5 hover:border-accent/40 transition-all p-5 sm:p-8 flex flex-col justify-between min-h-[180px] sm:min-h-[220px]"
         >
           <div className="relative z-10">
             <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent mb-4 group-hover:scale-110 transition-transform">
@@ -125,7 +125,7 @@ export default function Dashboard() {
             <BookOpen className="text-accent" />
             Full Mock Papers
           </h3>
-          <span className="text-ink-dim text-sm">6 Papers • 1,050 Total Questions</span>
+          <span className="text-ink-dim text-xs sm:text-sm">6 Papers • 1,050 Total Questions</span>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

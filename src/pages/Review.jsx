@@ -92,36 +92,36 @@ export default function Review() {
       <div className="min-h-screen bg-canvas">
         {/* Header */}
         <header className="border-b border-hairline bg-canvas/85 backdrop-blur-md sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-3">
-            <Link to="/" className="btn-ghost text-sm"><ArrowLeft size={14} /> Dashboard</Link>
-            <div className="text-center">
-              <div className="text-xs text-emerald-400 uppercase tracking-[0.12em] flex items-center justify-center gap-1">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3">
+            <Link to="/" className="btn-ghost text-xs sm:text-sm px-2 sm:px-4 flex-shrink-0"><ArrowLeft size={14} /> <span className="hidden sm:inline">Dashboard</span></Link>
+            <div className="text-center min-w-0">
+              <div className="text-[10px] sm:text-xs text-emerald-400 uppercase tracking-[0.12em] flex items-center justify-center gap-1">
                 <Zap size={11} className="fill-current" /> Drill Review
               </div>
-              <div className="font-bold">{PLAYER_NAME}&apos;s Flash Drill</div>
+              <div className="font-bold text-sm sm:text-base truncate">{PLAYER_NAME}&apos;s Flash Drill</div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-extrabold">{drillPct}%</div>
-              <div className="text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-extrabold">{drillPct}%</div>
+              <div className="text-[10px] sm:text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
             </div>
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-5">
+        <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
           {/* Motivational verdict */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={'p-5 rounded-2xl border text-center ' +
+            className={'p-4 sm:p-5 rounded-xl sm:rounded-2xl border text-center ' +
               (drillPct >= 80
                 ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-emerald-500/10 border-emerald-500/30'
                 : drillPct >= 50
                 ? 'bg-gradient-to-r from-blue-500/10 via-blue-400/5 to-blue-500/10 border-blue-500/30'
                 : 'bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-amber-500/10 border-amber-500/30')}
           >
-            <div className="text-3xl mb-2">{emoji}</div>
-            <div className="font-bold text-lg text-white">{verdict}</div>
-            <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+            <div className="text-2xl sm:text-3xl mb-2">{emoji}</div>
+            <div className="font-bold text-base sm:text-lg text-white">{verdict}</div>
+            <div className="mt-2 sm:mt-3 flex items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
               <span className="flex items-center gap-1 text-success font-bold">
                 <Check size={14} /> {drillCorrect} correct
               </span>
@@ -136,7 +136,7 @@ export default function Review() {
 
           {/* Per-module score cards (only the drilled modules) */}
           <Card>
-            <div className={'grid gap-4 ' + (drillModules.length > 2 ? 'grid-cols-2 md:grid-cols-4' : `grid-cols-${drillModules.length}`)}>
+            <div className={'grid gap-3 sm:gap-4 grid-cols-2'}>
               {drillModules.map(code => {
                 const s = SECTIONS[code];
                 const stat = modStats[code] || { correct: 0, wrong: 0, skipped: 0, total: 0 };
@@ -160,8 +160,8 @@ export default function Review() {
           </Card>
 
           {/* Module selector + filter — only show drilled modules */}
-          <div className="flex flex-wrap items-center gap-3 justify-between">
-            <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 sm:justify-between">
+            <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline overflow-x-auto scrollbar-hide">
               {drillModules.map(code => {
                 const s = SECTIONS[code];
                 return (
@@ -247,20 +247,20 @@ export default function Review() {
     <div className="min-h-screen bg-canvas">
       {/* Header */}
       <header className="border-b border-hairline bg-canvas/85 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-3">
-          <Link to="/" className="btn-ghost text-sm"><ArrowLeft size={14} /> Dashboard</Link>
-          <div className="text-center">
-            <div className="text-xs text-ink-dim uppercase tracking-[0.12em]">Review</div>
-            <div className="font-bold">{paper.title}</div>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3">
+          <Link to="/" className="btn-ghost text-xs sm:text-sm px-2 sm:px-4 flex-shrink-0"><ArrowLeft size={14} /> <span className="hidden sm:inline">Dashboard</span></Link>
+          <div className="text-center min-w-0">
+            <div className="text-[10px] sm:text-xs text-ink-dim uppercase tracking-[0.12em]">Review</div>
+            <div className="font-bold text-sm sm:text-base truncate">{paper.title}</div>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-extrabold">{Math.round(result.score)}%</div>
-            <div className="text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
+          <div className="text-right flex-shrink-0">
+            <div className="text-xl sm:text-2xl font-extrabold">{Math.round(result.score)}%</div>
+            <div className="text-[10px] sm:text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 md:px-8 py-6 space-y-5">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 space-y-4 sm:space-y-5">
         {/* Score summary */}
         <Card>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -286,8 +286,8 @@ export default function Review() {
         </Card>
 
         {/* Section selector + filter */}
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 sm:justify-between">
+          <div className="flex gap-1 p-1 rounded-full bg-elevated/60 border border-hairline overflow-x-auto scrollbar-hide">
             {Object.values(SECTIONS).map((s) => (
               <button
                 key={s.code}

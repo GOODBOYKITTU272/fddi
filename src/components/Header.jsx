@@ -18,20 +18,20 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-md bg-canvas/70 border-b border-hairline">
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white whitespace-nowrap">
               ApplyWizz<span className="text-accent">AIST</span>
             </h1>
-            <span className="text-ink-dim font-semibold text-sm">// Preparation Portal</span>
+            <span className="text-ink-dim font-semibold text-[10px] sm:text-sm hidden xs:inline">// Preparation Portal</span>
           </div>
-          <p className="text-xs text-ink-muted mt-0.5">
+          <p className="text-[10px] sm:text-xs text-ink-muted mt-0.5 truncate">
             M.Des Entrance · Exam Date: {fmtDate(new Date(EXAM_DATE))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Pill label="Today" value={fmtDate(today)} tone="default" />
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <Pill label="Today" value={fmtDate(today)} tone="default" className="hidden sm:block" />
           <Pill label="Countdown" value={`${countdown} Days`} tone="accent" />
         </div>
       </div>
@@ -39,16 +39,16 @@ export function Header() {
   );
 }
 
-function Pill({ label, value, tone }) {
+function Pill({ label, value, tone, className = '' }) {
   const tones = {
     default: 'bg-elevated border-hairline text-ink',
     accent: 'bg-accent text-white border-accent shadow-glow',
     success: 'bg-elevated border-hairline text-success'
   };
   return (
-    <div className={'rounded-xl border px-3 py-1.5 text-xs ' + tones[tone]}>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.12em] opacity-80">{label}</div>
-      <div className="font-bold">{value}</div>
+    <div className={'rounded-xl border px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs ' + tones[tone] + ' ' + className}>
+      <div className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] opacity-80">{label}</div>
+      <div className="font-bold whitespace-nowrap">{value}</div>
     </div>
   );
 }

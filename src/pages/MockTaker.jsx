@@ -344,43 +344,43 @@ export default function MockTaker() {
   return (
     <div className="min-h-screen flex flex-col bg-canvas">
       {/* Top bar */}
-      <header className="border-b border-hairline px-4 md:px-8 py-3 flex items-center justify-between gap-4 backdrop-blur-md bg-canvas/85 sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <button className="btn-ghost px-2 py-1" onClick={() => setShowExitConfirm(true)}>
+      <header className="border-b border-hairline px-3 sm:px-4 md:px-8 py-2 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 backdrop-blur-md bg-canvas/85 sticky top-0 z-30">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <button className="btn-ghost px-2 py-1 flex-shrink-0" onClick={() => setShowExitConfirm(true)}>
             <X size={18} />
           </button>
-          <div>
-            <div className="font-semibold tracking-tight">
+          <div className="min-w-0">
+            <div className="font-semibold tracking-tight text-sm sm:text-base truncate">
               {isSmart ? `${PLAYER_NAME}'s Flash Drill` : paper.title}
             </div>
-            <div className="text-xs text-ink-muted">
-              {paper.isPlaceholder ? 'Preview using Mock 1 — full paper drops before scheduled date' : paper.difficulty + ' · ' + totalQuestions + ' Qs · ' + totalPaperMarks + ' marks'}
+            <div className="text-[10px] sm:text-xs text-ink-muted truncate">
+              {paper.isPlaceholder ? 'Preview — full paper drops before scheduled date' : paper.difficulty + ' · ' + totalQuestions + ' Qs · ' + totalPaperMarks + ' marks'}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           {/* Live score stats for drills */}
           {isDrill && (correctCount + wrongCount > 0) && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="flex items-center gap-1 text-success font-bold">
-                <CheckCircle2 size={13} /> {correctCount}
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+              <span className="flex items-center gap-0.5 text-success font-bold">
+                <CheckCircle2 size={12} /> {correctCount}
               </span>
-              <span className="flex items-center gap-1 text-danger font-bold">
-                <X size={13} /> {wrongCount}
+              <span className="flex items-center gap-0.5 text-danger font-bold">
+                <X size={12} /> {wrongCount}
               </span>
               {streak >= 2 && (
-                <span className="flex items-center gap-1 text-amber-400 font-bold animate-pulse">
-                  <Flame size={13} className="fill-amber-400" /> {streak}
+                <span className="flex items-center gap-0.5 text-amber-400 font-bold animate-pulse">
+                  <Flame size={12} className="fill-amber-400" /> {streak}
                 </span>
               )}
             </div>
           )}
-          <div className={'flex items-center gap-2 font-mono font-semibold ' + (lowTime ? 'text-danger animate-pulse-soft' : 'text-ink')}>
-            <Clock size={16} />
-            <span className="text-lg">{fmtTime(remaining)}</span>
+          <div className={'flex items-center gap-1 sm:gap-2 font-mono font-semibold text-sm sm:text-base ' + (lowTime ? 'text-danger animate-pulse-soft' : 'text-ink')}>
+            <Clock size={14} />
+            <span>{fmtTime(remaining)}</span>
           </div>
           <button
-            className="btn-primary px-4 py-2 text-sm"
+            className="btn-primary px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
             onClick={() => setShowSubmitConfirm(true)}
           >
             Submit
@@ -389,14 +389,14 @@ export default function MockTaker() {
       </header>
 
       {/* Section tabs */}
-      <div className="border-b border-hairline px-4 md:px-8 py-2 bg-surface/60 flex items-center gap-1 overflow-x-auto">
+      <div className="border-b border-hairline px-3 sm:px-4 md:px-8 py-2 bg-surface/60 flex items-center gap-1 overflow-x-auto scrollbar-hide">
         {isSmart ? (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30">
+          <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30">
             <Zap size={14} className="fill-current" />
             <span className="font-bold uppercase tracking-wider">Adaptive Flash Drill</span>
           </div>
         ) : sectionOrder.map((code) => {
-          if (isDrill && code !== activeSection) return null; // Only show active section in drill mode
+          if (isDrill && code !== activeSection) return null;
           const sec = SECTIONS[code];
           const list = isDrill ? sectionList : paper.sections[code];
           const attempted = list.filter((q) => answers[q.id] != null).length;
@@ -405,18 +405,18 @@ export default function MockTaker() {
             <button
               key={code}
               onClick={() => gotoSection(code)}
-              className={'flex items-center gap-2 px-4 py-2 rounded-full text-sm transition whitespace-nowrap ' +
+              className={'flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition whitespace-nowrap ' +
                 (isActive
                   ? `bg-${sec.color}/15 text-${sec.color} ring-1 ring-${sec.color}/30`
                   : 'text-ink-muted hover:text-white')}
             >
               <span className={`w-1.5 h-1.5 rounded-full bg-${sec.color}`} />
               <span className="font-semibold">{sec.short}</span>
-              <span className="text-xs opacity-70">{attempted}/{list.length}</span>
+              <span className="text-[10px] sm:text-xs opacity-70">{attempted}/{list.length}</span>
             </button>
           );
         })}
-        <div className="ml-auto text-xs text-ink-dim flex items-center gap-2">
+        <div className="ml-auto text-[10px] sm:text-xs text-ink-dim flex items-center gap-2 whitespace-nowrap flex-shrink-0">
           Attempted: <span className="font-semibold text-white">{totalAttempted}/{totalQuestions}</span>
         </div>
       </div>
@@ -448,7 +448,7 @@ export default function MockTaker() {
       </AnimatePresence>
 
       {/* Main grid */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 max-w-7xl w-full mx-auto px-4 md:px-8 py-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 sm:gap-6 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6">
         {/* Question panel */}
         <main className="space-y-4">
           {passage && (
@@ -658,19 +658,19 @@ export default function MockTaker() {
             )}
           </AnimatePresence>
 
-          <div className="flex items-center justify-between">
-            <button className="btn-secondary" onClick={prev} disabled={activeSection === 'A' && activeIndex === 0}>
-              <ChevronLeft size={16} /> Previous
+          <div className="flex items-center justify-between gap-2">
+            <button className="btn-secondary text-xs sm:text-sm py-2 px-3 sm:px-5" onClick={prev} disabled={activeSection === 'A' && activeIndex === 0}>
+              <ChevronLeft size={16} /> <span className="hidden sm:inline">Previous</span><span className="sm:hidden">Prev</span>
             </button>
-            <span className="text-xs text-ink-dim">Use ← → to navigate · 1–4 to answer · M to mark</span>
-            <button className="btn-primary" onClick={next}>
-              Save & Next <ChevronRight size={16} />
+            <span className="text-[10px] text-ink-dim hidden md:block">Use ← → to navigate · 1–4 to answer · M to mark</span>
+            <button className="btn-primary text-xs sm:text-sm py-2 px-3 sm:px-5" onClick={next}>
+              <span className="hidden sm:inline">Save & Next</span><span className="sm:hidden">Next</span> <ChevronRight size={16} />
             </button>
           </div>
         </main>
 
-        {/* Question palette */}
-        <aside className="lg:sticky lg:top-28 self-start space-y-4">
+        {/* Question palette — hidden on mobile, shown on lg+ */}
+        <aside className="hidden lg:block lg:sticky lg:top-28 self-start space-y-4">
           <div className="card">
             <div className="flex items-center justify-between mb-3">
               <div className="font-semibold text-sm">Question Palette</div>

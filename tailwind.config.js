@@ -15,6 +15,14 @@ export default {
     'ring-sectionA/30', 'ring-sectionB/30', 'ring-sectionC/30', 'ring-sectionD/30'
   ],
   theme: {
+    screens: {
+      'xs': '375px',
+      'sm': '480px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px'
+    },
     extend: {
       colors: {
         // Stripe-inspired dark palette
