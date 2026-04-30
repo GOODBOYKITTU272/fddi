@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, ChevronLeft, ChevronRight, Flag, CheckCircle2, 
-  AlertTriangle, X, Zap, Youtube, Sparkles, Rocket 
+  AlertTriangle, X, Zap, Youtube, Sparkles, Rocket, Trophy, Flame, Heart, Star 
 } from 'lucide-react';
 import { getPaper } from '../data/papers.js';
 import { SECTIONS, MOCK_DURATION_MIN } from '../config.js';
@@ -14,8 +14,37 @@ import { Figure } from '../components/Figure.jsx';
 import { figureFor } from '../data/figures.js';
 import { videoForTag } from '../data/youtube.js';
 import { askExplanation } from '../lib/openai.js';
+import { PLAYER_NAME, createDrillSession, logDrillResponse, finishDrillSession } from '../lib/supabase.js';
 
 const sectionOrder = ['A', 'B', 'C', 'D'];
+
+// Motivational messages for correct answers
+const CORRECT_MESSAGES = [
+  `🔥 Amazing, ${PLAYER_NAME}! You nailed it!`,
+  `🎯 Perfect shot, ${PLAYER_NAME}!`,
+  `✨ Brilliant, ${PLAYER_NAME}! Keep this energy!`,
+  `💪 You're on fire, ${PLAYER_NAME}!`,
+  `🌟 ${PLAYER_NAME}, you're unstoppable!`,
+  `🚀 ${PLAYER_NAME} is crushing it!`,
+  `💎 That's the ${PLAYER_NAME} magic!`,
+  `⚡ Lightning fast & correct, ${PLAYER_NAME}!`,
+  `🏆 Champion move, ${PLAYER_NAME}!`,
+  `🎉 Yes! ${PLAYER_NAME} knows this!`,
+];
+const WRONG_MESSAGES = [
+  `No worries, ${PLAYER_NAME}! Every mistake is a lesson 💡`,
+  `Almost there, ${PLAYER_NAME}! You'll get the next one 🎯`,
+  `Keep going, ${PLAYER_NAME}! Growth is the goal 🌱`,
+  `That's okay, ${PLAYER_NAME}! Now you know it forever 🧠`,
+  `${PLAYER_NAME}, this one was tricky! You've got the next one 💪`,
+];
+const STREAK_MESSAGES = {
+  3: `🔥 ${PLAYER_NAME} is on a 3-streak! Unstoppable!`,
+  5: `⚡ 5 in a row! ${PLAYER_NAME} is in the zone!`,
+  7: `🏆 7-streak! ${PLAYER_NAME} is absolutely dominating!`,
+  10: `👑 10 STREAK! ${PLAYER_NAME}, you are a LEGEND!`,
+};
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 export default function MockTaker() {
   const { id } = useParams();
@@ -28,7 +57,8 @@ export default function MockTaker() {
   const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : null;
   const isSmart = searchParams.get('smart') === '1';
   const smartTime = Number(searchParams.get('time') || 15);
-  const smartMods = (searchParams.get('mods') || 'A,B,C,D').split(',');
+  const smartModsRaw = searchParams.get('mods') || 'A,B,C,D';
+  const smartMods = useMemo(() => smartModsRaw.split(','), [smartModsRaw]);
 
   const [activeSection, setActiveSection] = useState(startSection);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -40,12 +70,25 @@ export default function MockTaker() {
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [attempts, setAttempts] = useState({}); // { qid: number }
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [motivationMsg, setMotivationMsg] = useState(null);
+  const [motivationTone, setMotivationTone] = useState('success'); // 'success' | 'warn'
+  const sessionIdRef = useRef(null);
+  const qStartTimeRef = useRef(Date.now());
 
   const isDrill = limit != null || isSmart;
   const drillDurationSec = isSmart ? smartTime * 60 : (isDrill ? limit * 60 : MOCK_DURATION_MIN * 60);
 
+  // Use a ref to store the smart-pooled questions so they are only shuffled once
+  const smartPoolRef = useRef(null);
   const sectionList = useMemo(() => {
     if (isSmart) {
+      // Return the cached pool if we already built it
+      if (smartPoolRef.current) return smartPoolRef.current;
+
       // SMART ALLOCATION LOGIC
       // A/B = 1.5 min/Q, C/D = 1 min/Q
       const totalMods = smartMods.length;
@@ -61,6 +104,7 @@ export default function MockTaker() {
         const shuffled = [...fullList].sort(() => 0.5 - Math.random());
         pooled = [...pooled, ...shuffled.slice(0, qCount)];
       });
+      smartPoolRef.current = pooled;
       return pooled;
     }
     const list = paper.sections[activeSection] || [];
@@ -142,15 +186,71 @@ export default function MockTaker() {
       });
     }
     nav(`/review/${paper.id}`);
-  }, [answers, paper, nav, recordMockAttempt, isDrill, sectionList, activeSection]);
+    // Finish Supabase drill session
+    if (isSmart && sessionIdRef.current) {
+      const c = sectionList.filter(q => answers[q.id] === q.correct).length;
+      const w = sectionList.filter(q => answers[q.id] != null && answers[q.id] !== q.correct).length;
+      const pct = sectionList.length ? Math.round((c / sectionList.length) * 100) : 0;
+      finishDrillSession({ sessionId: sessionIdRef.current, correct: c, wrong: w, scorePct: pct, streakBest: bestStreak });
+    }
+  }, [answers, paper, nav, recordMockAttempt, isDrill, sectionList, activeSection, isSmart, bestStreak]);
 
   const remaining = useTimer(drillDurationSec, {
     onExpire: () => submit(true)
   });
 
+  // Create Supabase drill session on mount (for smart drills)
+  useEffect(() => {
+    if (isSmart && !sessionIdRef.current) {
+      createDrillSession({
+        mockId: paper.id,
+        modules: smartMods,
+        timeMinutes: smartTime,
+        totalQs: sectionList.length
+      }).then(res => {
+        if (res.ok) sessionIdRef.current = res.sessionId;
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function selectOption(idx) {
-    if (showFeedback || !adaptedQ) return; // Prevent double selecting in feedback mode
+    if (showFeedback || !adaptedQ) return;
+    const isCorrect = idx === adaptedQ.correct;
     setAnswers((a) => ({ ...a, [adaptedQ.id]: idx }));
+
+    // Track score + streak
+    if (isCorrect) {
+      setCorrectCount(c => c + 1);
+      setStreak(s => {
+        const newStreak = s + 1;
+        setBestStreak(b => Math.max(b, newStreak));
+        // Show streak milestone or random correct message
+        const streakMsg = STREAK_MESSAGES[newStreak];
+        setMotivationMsg(streakMsg || pickRandom(CORRECT_MESSAGES));
+        setMotivationTone('success');
+        return newStreak;
+      });
+    } else {
+      setWrongCount(w => w + 1);
+      setStreak(0);
+      setMotivationMsg(pickRandom(WRONG_MESSAGES));
+      setMotivationTone('warn');
+    }
+
+    // Log to Supabase
+    const elapsed = Date.now() - qStartTimeRef.current;
+    logDrillResponse({
+      sessionId: sessionIdRef.current,
+      questionId: adaptedQ.id,
+      section: adaptedQ.section || activeSection,
+      tag: adaptedQ.tag,
+      selected: idx,
+      correctIdx: adaptedQ.correct,
+      isCorrect,
+      timeMs: elapsed
+    });
+
     if (isDrill) setShowFeedback(true);
   }
   function toggleMark() {
@@ -174,6 +274,8 @@ export default function MockTaker() {
     setActiveIndex(Math.max(0, Math.min(adaptedSectionList.length - 1, i)));
     setShowFeedback(false);
     setAiData(null);
+    setMotivationMsg(null);
+    qStartTimeRef.current = Date.now();
   }
   function gotoSection(code) {
     setActiveSection(code);
@@ -203,10 +305,14 @@ export default function MockTaker() {
 
 
   // Keyboard shortcuts
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const nextCb = useCallback(() => next(), [activeIndex, activeSection, adaptedSectionList.length]);
+  const prevCb = useCallback(() => prev(), [activeIndex, activeSection]);
+
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'ArrowRight') next();
-      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') nextCb();
+      if (e.key === 'ArrowLeft') prevCb();
       if (e.key === 'm' || e.key === 'M') toggleMark();
       if (['1', '2', '3', '4'].includes(e.key)) {
         if (adaptedQ) selectOption(Number(e.key) - 1);
@@ -214,7 +320,7 @@ export default function MockTaker() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  });
+  }, [nextCb, prevCb, adaptedQ, showFeedback]);
 
   const totalAttempted = Object.keys(answers).length;
   const totalQuestions = isSmart ? sectionList.length : (limit != null ? limit : sectionOrder.reduce((s, code) => s + paper.sections[code].length, 0));
@@ -232,13 +338,31 @@ export default function MockTaker() {
             <X size={18} />
           </button>
           <div>
-            <div className="font-semibold tracking-tight">{paper.title}</div>
+            <div className="font-semibold tracking-tight">
+              {isSmart ? `${PLAYER_NAME}'s Flash Drill` : paper.title}
+            </div>
             <div className="text-xs text-ink-muted">
               {paper.isPlaceholder ? 'Preview using Mock 1 — full paper drops before scheduled date' : paper.difficulty + ' · ' + totalQuestions + ' Qs · ' + totalPaperMarks + ' marks'}
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Live score stats for drills */}
+          {isDrill && (correctCount + wrongCount > 0) && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1 text-success font-bold">
+                <CheckCircle2 size={13} /> {correctCount}
+              </span>
+              <span className="flex items-center gap-1 text-danger font-bold">
+                <X size={13} /> {wrongCount}
+              </span>
+              {streak >= 2 && (
+                <span className="flex items-center gap-1 text-amber-400 font-bold animate-pulse">
+                  <Flame size={13} className="fill-amber-400" /> {streak}
+                </span>
+              )}
+            </div>
+          )}
           <div className={'flex items-center gap-2 font-mono font-semibold ' + (lowTime ? 'text-danger animate-pulse-soft' : 'text-ink')}>
             <Clock size={16} />
             <span className="text-lg">{fmtTime(remaining)}</span>
@@ -284,6 +408,32 @@ export default function MockTaker() {
           Attempted: <span className="font-semibold text-white">{totalAttempted}/{totalQuestions}</span>
         </div>
       </div>
+
+      {/* Motivational Banner */}
+      <AnimatePresence>
+        {motivationMsg && showFeedback && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={'px-4 md:px-8 py-3 text-center font-bold text-sm ' +
+              (motivationTone === 'success'
+                ? 'bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-emerald-500/20 text-emerald-300 border-b border-emerald-500/30'
+                : 'bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/20 text-amber-300 border-b border-amber-500/30')}
+          >
+            <div className="flex items-center justify-center gap-2">
+              {motivationTone === 'success' ? <Star size={16} className="fill-emerald-400 text-emerald-400" /> : <Heart size={16} className="text-amber-400" />}
+              <span>{motivationMsg}</span>
+              {motivationTone === 'success' && streak >= 2 && (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold flex items-center gap-1">
+                  <Flame size={11} className="fill-amber-400" /> {streak} streak
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 max-w-7xl w-full mx-auto px-4 md:px-8 py-6">
