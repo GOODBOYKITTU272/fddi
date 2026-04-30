@@ -5,7 +5,7 @@ export default [
   q('2B01', 'B', 'What is the primary characteristic of "Circular Fashion" according to the passage?', ['High-volume exports', 'Design for end-of-life and recyclability', 'Use of synthetic fibers', 'Focus on luxury branding'], 1, 'The passage states circular fashion products are designed with end-of-life in mind.', { passageRef: 'p1', tag: 'RC Strategy' }),
   q('2B02', 'B', 'What is identified as the biggest hurdle to circular fashion in India?', ['Lack of technology', 'Consumer perception of pre-owned clothing', 'High cost of raw materials', 'International trade barriers'], 1, 'The passage explicitly mentions consumer perception as the primary hurdle.', { passageRef: 'p1', tag: 'RC Strategy' }),
   q('2B03', 'B', 'The term "Godhri" is used to exemplify:', ['Modern industrial recycling', 'Traditional Indian upcycling', 'Fast fashion trends', 'Luxury fabric design'], 1, 'The passage uses Godhri as an example of traditional upcycling.', { passageRef: 'p1', tag: 'RC Strategy' }),
-  q('2B04', 'B', 'Industry recyclers find it difficult to source materials because:', ['Textile waste collection is unorganized', 'Cotton is too expensive', 'Exports are falling', 'Government bans scrap imports'], 0, 'The passage mentions unorganized textile waste collection as a difficulty.', { passageRef: 'p1', tag: 'RC Strategy' }),
+  q('2B04', 'B', 'Industry recyclers find it difficult to source materials because:', ['Textile waste collection is unorganized', 'Cotton is too expensive', 'Exports are falling', 'Government bans scrap imports'\The passage mentions unorganized textile waste collection as a difficulty.', { passageRef: 'p1', tag: 'RC Strategy' }),
   q('2B05', 'B', 'What role is PM MITRA expected to play?', ['Creating fast-fashion hubs', 'Integrating sustainable practices into manufacturing', 'Lowering labor costs', 'Banning pre-owned clothing sales'], 1, 'The passage states PM MITRA parks are expected to integrate sustainable practices.', { passageRef: 'p1', tag: 'RC Strategy' }),
 
   // Vocabulary - Synonyms
@@ -34,24 +34,24 @@ export default [
   q('2B22', 'B', 'Idiom meaning: _Cost an arm and a leg_', ['Cheap', 'Very expensive', 'Difficult task', 'Injury'], 1, 'This idiom means something is extremely expensive.', { tag: 'Idioms' }),
   q('2B23', 'B', 'Idiom meaning: _Piece of cake_', ['Tasty', 'Very easy', 'A celebration', 'Small portion'], 1, 'Piece of cake means a very easy task.', { tag: 'Idioms' }),
   q('2B24', 'B', 'Idiom meaning: _Cry over spilled milk_', ['To be sorry', 'To complain about past losses', 'To be wasteful', 'To be loud'], 1, 'To worry about something that has already happened and cannot be fixed.', { tag: 'Idioms' }),
-  q('2B25', 'B', 'Idiom meaning: _Break the ice_', ['To start a conversation', 'To create a problem', 'To be cold', 'To win a race'], 0, 'To break the ice means to relieve tension or start a conversation in a social setting.', { tag: 'Idioms' }),
+  q('2B25', 'B', 'Idiom meaning: _Break the ice_', ['To start a conversation', 'To create a problem', 'To be cold', 'To win a race'\To break the ice means to relieve tension or start a conversation in a social setting.', { tag: 'Idioms' }),
 
   // Spelling
-  q('2B26', 'B', 'Correct Spelling:', ['Commitment', 'Comittment', 'Comitment', 'Committment'], 0, 'Commitment has double "m" and single "t" in the middle.', { tag: 'Spelling' }),
-  q('2B27', 'B', 'Correct Spelling:', ['Accommodation', 'Acommodation', 'Accomodation', 'Acomodation'], 0, 'Accommodation has double "c" and double "m".', { tag: 'Spelling' }),
-  q('2B28', 'B', 'Correct Spelling:', ['Separate', 'Seperate', 'Seprate', 'Seperat'], 0, 'Separate (think "there is a rat in separate").', { tag: 'Spelling' }),
-  q('2B29', 'B', 'Correct Spelling:', ['Maintenance', 'Maintainance', 'Maintenence', 'Maintenence'], 0, 'Maintenance.', { tag: 'Spelling' }),
-  q('2B30', 'B', 'Correct Spelling:', ['Entrepreneur', 'Enterpreneur', 'Entreprenuer', 'Enterprenur'], 0, 'Entrepreneur.', { tag: 'Spelling' }),
+  q('2B26', 'B', 'Correct Spelling:', ['Commitment', 'Comittment', 'Comitment', 'Committment'\Commitment has double "m" and single "t" in the middle.', { tag: 'Spelling' }),
+  q('2B27', 'B', 'Correct Spelling:', ['Accommodation', 'Acommodation', 'Accomodation', 'Acomodation'\Accommodation has double "c" and double "m".', { tag: 'Spelling' }),
+  q('2B28', 'B', 'Correct Spelling:', ['Separate', 'Seperate', 'Seprate', 'Seperat'\Separate (think "there is a rat in separate").', { tag: 'Spelling' }),
+  q('2B29', 'B', 'Correct Spelling:', ['Maintenance', 'Maintainance', 'Maintenence', 'Maintenence'\Maintenance.', { tag: 'Spelling' }),
+  q('2B30', 'B', 'Correct Spelling:', ['Entrepreneur', 'Enterpreneur', 'Entreprenuer', 'Enterprenur'\Entrepreneur.', { tag: 'Spelling' }),
 
   // Fillers
-  q('2B31', 'B', 'He is proficient ___ English.', ['in', 'at', 'with', 'on'], 0, 'Proficient in something.', { tag: 'RC Strategy' }),
+  q('2B31', 'B', 'He is proficient ___ English.', ['in', 'at', 'with', 'on'\Proficient in something.', { tag: 'RC Strategy' }),
   q('2B32', 'B', 'The cat jumped ___ the table.', ['on', 'onto', 'at', 'in'], 1, '"Onto" indicates movement to a surface.', { tag: 'RC Strategy' }),
   q('2B33', 'B', 'She has been living here ___ 2010.', ['for', 'since', 'from', 'in'], 1, '"Since" for a specific point in time.', { tag: 'RC Strategy' }),
-  q('2B34', 'B', 'He is afraid ___ dogs.', ['of', 'from', 'by', 'at'], 0, 'Afraid of.', { tag: 'RC Strategy' }),
-  q('2B35', 'B', 'The meeting was put ___ due to rain.', ['off', 'on', 'down', 'out'], 0, '"Put off" means to postpone.', { tag: 'RC Strategy' }),
+  q('2B34', 'B', 'He is afraid ___ dogs.', ['of', 'from', 'by', 'at'\Afraid of.', { tag: 'RC Strategy' }),
+  q('2B35', 'B', 'The meeting was put ___ due to rain.', ['off', 'on', 'down', 'out'\"Put off" means to postpone.', { tag: 'RC Strategy' }),
 
   // One Word Substitution
-  q('2B36', 'B', 'A person who loves books:', ['Bibliophile', 'Philanthropist', 'Polyglot', 'Misogynist'], 0, 'Bibliophile.', { tag: 'One-word Sub' }),
+  q('2B36', 'B', 'A person who loves books:', ['Bibliophile', 'Philanthropist', 'Polyglot', 'Misogynist'\Bibliophile.', { tag: 'One-word Sub' }),
   q('2B37', 'B', 'Study of birds:', ['Zoology', 'Ornithology', 'Entomology', 'Botany'], 1, 'Ornithology.', { tag: 'One-word Sub' }),
   q('2B38', 'B', 'One who eats everything:', ['Carnivorous', 'Omnivorous', 'Herbivorous', 'Glutton'], 1, 'Omnivorous.', { tag: 'One-word Sub' }),
   q('2B39', 'B', 'A life history written by oneself:', ['Biography', 'Autobiography', 'Journal', 'Memoir'], 1, 'Autobiography.', { tag: 'One-word Sub' }),
@@ -61,13 +61,13 @@ export default [
   q('2B41', 'B', 'Arrange: A. Result, B. Examination, C. Preparation, D. Hall ticket.', ['CDAB', 'CBDA', 'CDBA', 'BDCA'], 2, 'Preparation (C) -> Hall ticket (D) -> Examination (B) -> Result (A).', { tag: 'Para-Jumbles' }),
   q('2B42', 'B', 'Arrange: A. Payment, B. Selection, C. Delivery, D. Order.', ['BADC', 'BDAC', 'ADBC', 'DBAC'], 1, 'Selection (B) -> Order (D) -> Payment (A) -> Delivery (C).', { tag: 'Para-Jumbles' }),
   q('2B43', 'B', 'Arrange: A. Flight, B. Check-in, C. Destination, D. Boarding.', ['BADC', 'BDAC', 'ABDC', 'DABC'], 1, 'Check-in (B) -> Boarding (D) -> Flight (A) -> Destination (C).', { tag: 'Para-Jumbles' }),
-  q('2B44', 'B', 'Arrange: A. Design, B. Market research, C. Prototype, D. Feedback.', ['BACD', 'BADC', 'ABCD', 'DBAC'], 0, 'Market research (B) -> Design (A) -> Prototype (C) -> Feedback (D).', { tag: 'Para-Jumbles' }),
-  q('2B45', 'B', 'Arrange: A. Thread, B. Fabric, C. Cotton, D. Garment.', ['CABD', 'CBAD', 'ABCD', 'DBCA'], 0, 'Cotton (C) -> Thread (A) -> Fabric (B) -> Garment (D).', { tag: 'Para-Jumbles' }),
+  q('2B44', 'B', 'Arrange: A. Design, B. Market research, C. Prototype, D. Feedback.', ['BACD', 'BADC', 'ABCD', 'DBAC'\Market research (B) -> Design (A) -> Prototype (C) -> Feedback (D).', { tag: 'Para-Jumbles' }),
+  q('2B45', 'B', 'Arrange: A. Thread, B. Fabric, C. Cotton, D. Garment.', ['CABD', 'CBAD', 'ABCD', 'DBCA'\Cotton (C) -> Thread (A) -> Fabric (B) -> Garment (D).', { tag: 'Para-Jumbles' }),
 
   // Sentence Improvement
-  q('2B46', 'B', 'Improve: She _has seen_ the movie yesterday.', ['saw', 'had seen', 'sees', 'no improvement'], 0, 'Use past simple for specific past time.', { tag: 'RC Strategy' }),
-  q('2B47', 'B', 'Improve: He is _more taller_ than his brother.', ['taller', 'tallest', 'more tall', 'no improvement'], 0, '"More taller" is a double comparative error.', { tag: 'RC Strategy' }),
-  q('2B48', 'B', 'Improve: If I _was_ you, I would go.', ['were', 'am', 'had been', 'no improvement'], 0, 'Subjunctive for hypothetical.', { tag: 'RC Strategy' }),
-  q('2B49', 'B', 'Improve: The climate of Delhi is hotter than _Mumbai_.', ['that of Mumbai', 'those of Mumbai', 'the one of Mumbai', 'no improvement'], 0, 'Compare climate with climate.', { tag: 'RC Strategy' }),
-  q('2B50', 'B', 'Improve: He _is having_ a large house.', ['has', 'had', 'is have', 'no improvement'], 0, 'State verbs like "have" (ownership) are not usually used in continuous.', { tag: 'RC Strategy' })
+  q('2B46', 'B', 'Improve: She _has seen_ the movie yesterday.', ['saw', 'had seen', 'sees', 'no improvement'\Use past simple for specific past time.', { tag: 'RC Strategy' }),
+  q('2B47', 'B', 'Improve: He is _more taller_ than his brother.', ['taller', 'tallest', 'more tall', 'no improvement'\"More taller" is a double comparative error.', { tag: 'RC Strategy' }),
+  q('2B48', 'B', 'Improve: If I _was_ you, I would go.', ['were', 'am', 'had been', 'no improvement'\Subjunctive for hypothetical.', { tag: 'RC Strategy' }),
+  q('2B49', 'B', 'Improve: The climate of Delhi is hotter than _Mumbai_.', ['that of Mumbai', 'those of Mumbai', 'the one of Mumbai', 'no improvement'\Compare climate with climate.', { tag: 'RC Strategy' }),
+  q('2B50', 'B', 'Improve: He _is having_ a large house.', ['has', 'had', 'is have', 'no improvement'\State verbs like "have" (ownership) are not usually used in continuous.', { tag: 'RC Strategy' })
 ];
