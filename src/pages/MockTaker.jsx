@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { 
+  Clock, ChevronLeft, ChevronRight, Flag, CheckCircle2, 
+  AlertTriangle, X, Zap, Youtube, Sparkles, Rocket 
+} from 'lucide-react';
 import { getPaper } from '../data/papers.js';
 import { SECTIONS, MOCK_DURATION_MIN } from '../config.js';
 import { useTimer, fmtTime } from '../hooks/useTimer.js';
@@ -11,7 +14,6 @@ import { Figure } from '../components/Figure.jsx';
 import { figureFor } from '../data/figures.js';
 import { videoForTag } from '../data/youtube.js';
 import { askExplanation } from '../lib/openai.js';
-import { Youtube, Sparkles } from 'lucide-react';
 
 const sectionOrder = ['A', 'B', 'C', 'D'];
 
@@ -24,6 +26,9 @@ export default function MockTaker() {
   const [searchParams] = useSearchParams();
   const startSection = searchParams.get('section') || 'A';
   const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : null;
+  const isSmart = searchParams.get('smart') === '1';
+  const smartTime = Number(searchParams.get('time') || 15);
+  const smartMods = (searchParams.get('mods') || 'A,B,C,D').split(',');
 
   const [activeSection, setActiveSection] = useState(startSection);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -36,32 +41,39 @@ export default function MockTaker() {
   const [aiLoading, setAiLoading] = useState(false);
   const [attempts, setAttempts] = useState({}); // { qid: number }
 
-  const isDrill = limit != null;
-  const drillDurationSec = isDrill ? limit * 60 : MOCK_DURATION_MIN * 60;
-
-  const remaining = useTimer(drillDurationSec, {
-    onExpire: () => submit(true)
-  });
+  const isDrill = limit != null || isSmart;
+  const drillDurationSec = isSmart ? smartTime * 60 : (isDrill ? limit * 60 : MOCK_DURATION_MIN * 60);
 
   const sectionList = useMemo(() => {
+    if (isSmart) {
+      // SMART ALLOCATION LOGIC
+      // A/B = 1.5 min/Q, C/D = 1 min/Q
+      const totalMods = smartMods.length;
+      const timePerMod = smartTime / totalMods;
+      
+      let pooled = [];
+      smartMods.forEach(code => {
+        const fullList = paper.sections[code] || [];
+        const timeWeight = (code === 'A' || code === 'B') ? 1.5 : 1.0;
+        const qCount = Math.max(1, Math.floor(timePerMod / timeWeight));
+        
+        // Randomly pick qCount from fullList
+        const shuffled = [...fullList].sort(() => 0.5 - Math.random());
+        pooled = [...pooled, ...shuffled.slice(0, qCount)];
+      });
+      return pooled;
+    }
     const list = paper.sections[activeSection] || [];
     return limit ? list.slice(0, limit) : list;
-  }, [paper, activeSection, limit]);
-
-  const currentQ = sectionList[activeIndex];
-  const passage = currentQ?.passageRef ? paper.passages?.[currentQ.passageRef] : null;
+  }, [paper, activeSection, limit, isSmart, smartMods, smartTime]);
 
   // ---- Within-mock adaptive: track per-section running accuracy and re-pool from easier/harder pool ----
-  // Implementation: when accuracy in current section drops below 50% (after >=4 attempted),
-  // we sort remaining questions in that section by ascending difficulty.
-  // When >75%, we sort by descending difficulty. Otherwise leave as-is.
   const adaptedSectionList = useMemo(() => {
     const attempted = sectionList.filter((q) => answers[q.id] != null);
     if (attempted.length < 4) return sectionList;
     const correct = attempted.filter((q) => answers[q.id] === q.correct).length;
     const acc = correct / attempted.length;
     if (acc < 0.5) {
-      // pull easier ones forward (keep already-attempted in place)
       const remaining = sectionList.filter((q) => answers[q.id] == null);
       const reordered = [...remaining].sort((a, b) => a.difficulty - b.difficulty);
       const attemptedSet = new Set(attempted.map((q) => q.id));
@@ -76,57 +88,10 @@ export default function MockTaker() {
   }, [sectionList, answers]);
 
   const adaptedQ = adaptedSectionList[activeIndex];
-
-  function selectOption(idx) {
-    if (showFeedback) return; // Prevent double selecting in feedback mode
-    setAnswers((a) => ({ ...a, [adaptedQ.id]: idx }));
-    if (isDrill) setShowFeedback(true);
-  }
-  function toggleMark() {
-    setMarked((m) => {
-      const next = new Set(m);
-      if (next.has(adaptedQ.id)) next.delete(adaptedQ.id);
-      else next.add(adaptedQ.id);
-      return next;
-    });
-  }
-  function clearResponse() {
-    setAnswers((a) => {
-      const next = { ...a };
-      delete next[adaptedQ.id];
-      return next;
-    });
-  }
-  function gotoIndex(i) {
-    setActiveIndex(Math.max(0, Math.min(adaptedSectionList.length - 1, i)));
-    setShowFeedback(false);
-    setAiData(null);
-  }
-  function gotoSection(code) {
-    setActiveSection(code);
-    setActiveIndex(0);
-    setShowFeedback(false);
-    setAiData(null);
-  }
-  function next() {
-    if (activeIndex < adaptedSectionList.length - 1) {
-      gotoIndex(activeIndex + 1);
-    } else {
-      const idx = sectionOrder.indexOf(activeSection);
-      if (idx < sectionOrder.length - 1) gotoSection(sectionOrder[idx + 1]);
-    }
-  }
-  function prev() {
-    if (activeIndex > 0) gotoIndex(activeIndex - 1);
-    else {
-      const idx = sectionOrder.indexOf(activeSection);
-      if (idx > 0) {
-        const newSec = sectionOrder[idx - 1];
-        setActiveSection(newSec);
-        setActiveIndex(paper.sections[newSec].length - 1);
-      }
-    }
-  }
+  const passage = useMemo(() => {
+    if (!adaptedQ || !adaptedQ.passageRef) return null;
+    return paper.passages?.[adaptedQ.passageRef];
+  }, [adaptedQ, paper]);
 
   const submit = useCallback((forced = false) => {
     let totalMarks = 0;
@@ -177,7 +142,65 @@ export default function MockTaker() {
       });
     }
     nav(`/review/${paper.id}`);
-  }, [answers, paper, nav, recordMockAttempt]);
+  }, [answers, paper, nav, recordMockAttempt, isDrill, sectionList, activeSection]);
+
+  const remaining = useTimer(drillDurationSec, {
+    onExpire: () => submit(true)
+  });
+
+  function selectOption(idx) {
+    if (showFeedback || !adaptedQ) return; // Prevent double selecting in feedback mode
+    setAnswers((a) => ({ ...a, [adaptedQ.id]: idx }));
+    if (isDrill) setShowFeedback(true);
+  }
+  function toggleMark() {
+    if (!adaptedQ) return;
+    setMarked((m) => {
+      const next = new Set(m);
+      if (next.has(adaptedQ.id)) next.delete(adaptedQ.id);
+      else next.add(adaptedQ.id);
+      return next;
+    });
+  }
+  function clearResponse() {
+    if (!adaptedQ) return;
+    setAnswers((a) => {
+      const next = { ...a };
+      delete next[adaptedQ.id];
+      return next;
+    });
+  }
+  function gotoIndex(i) {
+    setActiveIndex(Math.max(0, Math.min(adaptedSectionList.length - 1, i)));
+    setShowFeedback(false);
+    setAiData(null);
+  }
+  function gotoSection(code) {
+    setActiveSection(code);
+    setActiveIndex(0);
+    setShowFeedback(false);
+    setAiData(null);
+  }
+  function next() {
+    if (activeIndex < adaptedSectionList.length - 1) {
+      gotoIndex(activeIndex + 1);
+    } else {
+      const idx = sectionOrder.indexOf(activeSection);
+      if (idx < sectionOrder.length - 1) gotoSection(sectionOrder[idx + 1]);
+    }
+  }
+  function prev() {
+    if (activeIndex > 0) gotoIndex(activeIndex - 1);
+    else {
+      const idx = sectionOrder.indexOf(activeSection);
+      if (idx > 0) {
+        const newSec = sectionOrder[idx - 1];
+        setActiveSection(newSec);
+        setActiveIndex(paper.sections[newSec].length - 1);
+      }
+    }
+  }
+
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -185,14 +208,16 @@ export default function MockTaker() {
       if (e.key === 'ArrowRight') next();
       if (e.key === 'ArrowLeft') prev();
       if (e.key === 'm' || e.key === 'M') toggleMark();
-      if (['1', '2', '3', '4'].includes(e.key)) selectOption(Number(e.key) - 1);
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        if (adaptedQ) selectOption(Number(e.key) - 1);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   });
 
   const totalAttempted = Object.keys(answers).length;
-  const totalQuestions = isDrill ? limit : sectionOrder.reduce((s, code) => s + paper.sections[code].length, 0);
+  const totalQuestions = isSmart ? sectionList.length : (limit != null ? limit : sectionOrder.reduce((s, code) => s + paper.sections[code].length, 0));
   const totalPaperMarks = isDrill 
     ? sectionList.reduce((s, q) => s + q.marks, 0)
     : sectionOrder.reduce((s, code) => s + paper.sections[code].reduce((m, q) => m + q.marks, 0), 0);
@@ -229,7 +254,12 @@ export default function MockTaker() {
 
       {/* Section tabs */}
       <div className="border-b border-hairline px-4 md:px-8 py-2 bg-surface/60 flex items-center gap-1 overflow-x-auto">
-        {sectionOrder.map((code) => {
+        {isSmart ? (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30">
+            <Zap size={14} className="fill-current" />
+            <span className="font-bold uppercase tracking-wider">Adaptive Flash Drill</span>
+          </div>
+        ) : sectionOrder.map((code) => {
           if (isDrill && code !== activeSection) return null; // Only show active section in drill mode
           const sec = SECTIONS[code];
           const list = isDrill ? sectionList : paper.sections[code];
@@ -274,187 +304,196 @@ export default function MockTaker() {
           )}
 
           <AnimatePresence mode="wait">
-            <motion.div
-              key={adaptedQ.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="card"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Chip tone="accent">Q{activeIndex + 1} of {adaptedSectionList.length}</Chip>
-                  <span className="text-xs text-ink-dim">
-                    Section {activeSection} · {adaptedQ.marks} {adaptedQ.marks > 1 ? 'marks' : 'mark'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {answers[adaptedQ.id] != null && (
-                    <button onClick={clearResponse} className="btn-ghost text-[10px] uppercase font-bold text-ink-dim hover:text-danger px-2 py-1">
-                      Clear Response
-                    </button>
-                  )}
-                  <button
-                    onClick={toggleMark}
-                    className={'btn-ghost text-xs px-3 py-1.5 ' + (marked.has(adaptedQ.id) ? 'text-warn' : '')}
-                  >
-                    <Flag size={14} className="mr-1" />
-                    {marked.has(adaptedQ.id) ? 'Marked' : 'Mark for review'}
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">{adaptedQ.text}</p>
-
-              {adaptedQ.image && !figureFor(adaptedQ.id) && (
-                <figure className="my-4">
-                  <img src={adaptedQ.image} alt="Question figure" className="rounded-xl border border-hairline max-h-72 object-contain bg-elevated" />
-                </figure>
-              )}
-
-              <Figure questionId={adaptedQ.id} />
-
-              <div className="mt-6 grid gap-2">
-                {adaptedQ.options.map((opt, i) => {
-                  const selected = answers[adaptedQ.id] === i;
-                  const isCorrect = i === adaptedQ.correct;
-                  let cls = 'border-hairline';
-                  
-                  if (showFeedback) {
-                    if (isCorrect) cls = 'border-success bg-success/10 text-success';
-                    else if (selected) cls = 'border-danger bg-danger/10 text-danger';
-                  } else if (selected) {
-                    cls = 'border-accent bg-accent/10 text-white';
-                  }
-
-                  return (
+            {adaptedQ ? (
+              <motion.div
+                key={adaptedQ.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="card"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Chip tone="accent">Q{activeIndex + 1} of {adaptedSectionList.length}</Chip>
+                    <span className="text-xs text-ink-dim">
+                      {isSmart ? `Module ${adaptedQ.section}` : `Section ${activeSection}`} · {adaptedQ.marks} {adaptedQ.marks > 1 ? 'marks' : 'mark'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {answers[adaptedQ.id] != null && (
+                      <button onClick={clearResponse} className="btn-ghost text-[10px] uppercase font-bold text-ink-dim hover:text-danger px-2 py-1">
+                        Clear Response
+                      </button>
+                    )}
                     <button
-                      key={i}
-                      disabled={showFeedback}
-                      onClick={() => selectOption(i)}
-                      className={
-                        'flex items-center gap-3 w-full text-left p-4 rounded-xl border transition ' + cls
-                      }
+                      onClick={toggleMark}
+                      className={'btn-ghost text-xs px-3 py-1.5 ' + (marked.has(adaptedQ.id) ? 'text-warn' : '')}
                     >
-                      <span
+                      <Flag size={14} className="mr-1" />
+                      {marked.has(adaptedQ.id) ? 'Marked' : 'Mark for review'}
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">{adaptedQ.text}</p>
+
+                {adaptedQ.image && !figureFor(adaptedQ.id) && (
+                  <figure className="my-4">
+                    <img src={adaptedQ.image} alt="Question figure" className="rounded-xl border border-hairline max-h-72 object-contain bg-elevated" />
+                  </figure>
+                )}
+
+                <Figure questionId={adaptedQ.id} />
+
+                <div className="mt-6 grid gap-2">
+                  {adaptedQ.options.map((opt, i) => {
+                    const selected = answers[adaptedQ.id] === i;
+                    const isCorrect = i === adaptedQ.correct;
+                    let cls = 'border-hairline';
+                    
+                    if (showFeedback) {
+                      if (isCorrect) cls = 'border-success bg-success/10 text-success';
+                      else if (selected) cls = 'border-danger bg-danger/10 text-danger';
+                    } else if (selected) {
+                      cls = 'border-accent bg-accent/10 text-white';
+                    }
+
+                    return (
+                      <button
+                        key={i}
+                        disabled={showFeedback}
+                        onClick={() => selectOption(i)}
                         className={
-                          'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ' +
-                          (selected || (showFeedback && isCorrect) ? 'bg-current text-canvas' : 'bg-elevated text-ink-muted border border-hairline')
+                          'flex items-center gap-3 w-full text-left p-4 rounded-xl border transition ' + cls
                         }
                       >
-                        {String.fromCharCode(65 + i)}
-                      </span>
-                      <span className="flex-1 text-sm">{opt}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                        <span
+                          className={
+                            'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ' +
+                            (selected || (showFeedback && isCorrect) ? 'bg-current text-canvas' : 'bg-elevated text-ink-muted border border-hairline')
+                          }
+                        >
+                          {String.fromCharCode(65 + i)}
+                        </span>
+                        <span className="flex-1 text-sm">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {showFeedback && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4 pt-6 border-t border-hairline">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-bold uppercase tracking-wider">Explanation</div>
-                    {videoForTag(adaptedQ.tag) && (
-                      <a href={videoForTag(adaptedQ.tag).url} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs text-danger">
-                        <Youtube size={14} className="mr-1" /> Watch Guide
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-sm leading-relaxed text-ink-muted">{adaptedQ.explanation}</p>
-                  
-                  <div className="flex gap-2">
-                    <button 
-                      className="btn-secondary text-xs py-1.5" 
-                      onClick={async () => {
-                        setAiLoading(true);
-                        const qid = adaptedQ.id;
-                        const currentAttempts = (attempts[qid] || 0) + 1;
-                        setAttempts(prev => ({ ...prev, [qid]: currentAttempts }));
-
-                        const res = await askExplanation({
-                          question: adaptedQ.text, 
-                          options: adaptedQ.options, 
-                          correctIndex: adaptedQ.correct, 
-                          userIndex: answers[qid], 
-                          section: activeSection,
-                          tag: adaptedQ.tag,
-                          difficulty: adaptedQ.difficulty,
-                          attemptNumber: currentAttempts
-                        });
-                        if (res.ok) setAiData(res.data);
-                        setAiLoading(false);
-                      }}
-                      disabled={aiLoading}
-                    >
-                      <Sparkles size={14} /> {aiLoading ? 'Tutor is thinking...' : 'AI Deep Dive'}
-                    </button>
-                  </div>
-
-                  {aiData && (
-                    <div className="space-y-3 mt-4">
-                      <div className="p-4 rounded-xl bg-accent/5 border border-accent/20 text-sm leading-relaxed">
-                        <div className="flex items-center gap-2 text-accent text-[10px] font-bold uppercase mb-2">
-                          <Sparkles size={12} /> AIST Ace AI Tutor
-                        </div>
-                        
-                        <div className="font-semibold text-white mb-2">{aiData.feedback}</div>
-                        
-                        {aiData.why && (
-                          <div className="mb-3">
-                            <span className="text-ink-dim font-medium">Logic: </span>
-                            <span className="text-ink-muted">{aiData.why}</span>
-                          </div>
-                        )}
-
-                        {aiData.mistake_analysis && (
-                          <div className="mb-3 p-2 rounded bg-danger/5 border border-danger/10 text-xs">
-                            <span className="text-danger font-bold uppercase text-[9px] block mb-1">Mistake Analysis</span>
-                            <span className="text-ink-muted italic">{aiData.mistake_analysis}</span>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                          {aiData.exam_tip && (
-                            <div className="p-3 rounded-lg bg-elevated border border-hairline">
-                              <div className="text-[9px] font-bold text-accent uppercase mb-1">Exam Logic</div>
-                              <div className="text-xs text-ink-muted">{aiData.exam_tip}</div>
-                            </div>
-                          )}
-                          {aiData.deep_dive && (
-                            <div className="p-3 rounded-lg bg-elevated border border-hairline">
-                              <div className="text-[9px] font-bold text-success uppercase mb-1">Deep Dive</div>
-                              <div className="text-xs text-ink-muted">{aiData.deep_dive}</div>
-                            </div>
-                          )}
-                        </div>
-
-                        {aiData.mini_challenge && (
-                          <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/30 border-dashed">
-                            <div className="text-[9px] font-bold text-accent uppercase mb-1">Mini Challenge</div>
-                            <div className="text-xs text-white font-medium italic">{aiData.mini_challenge}</div>
-                          </div>
-                        )}
-
-                        {aiData.status === 'retry_needed' && (
-                          <div className="mt-4 flex justify-center">
-                            <button 
-                              className="btn-primary text-xs px-6"
-                              onClick={() => {
-                                setShowFeedback(false);
-                                setAiData(null);
-                              }}
-                            >
-                              Try Again
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                {showFeedback && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4 pt-6 border-t border-hairline">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-bold uppercase tracking-wider">Explanation</div>
+                      {videoForTag(adaptedQ.tag) && (
+                        <a href={videoForTag(adaptedQ.tag).url} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs text-danger">
+                          <Youtube size={14} className="mr-1" /> Watch Guide
+                        </a>
+                      )}
                     </div>
-                  )}
-                </motion.div>
-              )}
-            </motion.div>
+                    <p className="text-sm leading-relaxed text-ink-muted">{adaptedQ.explanation}</p>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        className="btn-secondary text-xs py-1.5" 
+                        onClick={async () => {
+                          setAiLoading(true);
+                          const qid = adaptedQ.id;
+                          const currentAttempts = (attempts[qid] || 0) + 1;
+                          setAttempts(prev => ({ ...prev, [qid]: currentAttempts }));
+
+                          const res = await askExplanation({
+                            question: adaptedQ.text, 
+                            options: adaptedQ.options, 
+                            correctIndex: adaptedQ.correct, 
+                            userIndex: answers[qid], 
+                            section: activeSection,
+                            tag: adaptedQ.tag,
+                            difficulty: adaptedQ.difficulty,
+                            attemptNumber: currentAttempts
+                          });
+                          if (res.ok) setAiData(res.data);
+                          setAiLoading(false);
+                        }}
+                        disabled={aiLoading}
+                      >
+                        <Sparkles size={14} /> {aiLoading ? 'Tutor is thinking...' : 'AI Deep Dive'}
+                      </button>
+                    </div>
+
+                    {aiData && (
+                      <div className="space-y-3 mt-4">
+                        <div className="p-4 rounded-xl bg-accent/5 border border-accent/20 text-sm leading-relaxed">
+                          <div className="flex items-center gap-2 text-accent text-[10px] font-bold uppercase mb-2">
+                            <Sparkles size={12} /> AIST Ace AI Tutor
+                          </div>
+                          
+                          <div className="font-semibold text-white mb-2">{aiData.feedback}</div>
+                          
+                          {aiData.why && (
+                            <div className="mb-3">
+                              <span className="text-ink-dim font-medium">Logic: </span>
+                              <span className="text-ink-muted">{aiData.why}</span>
+                            </div>
+                          )}
+
+                          {aiData.mistake_analysis && (
+                            <div className="mb-3 p-2 rounded bg-danger/5 border border-danger/10 text-xs">
+                              <span className="text-danger font-bold uppercase text-[9px] block mb-1">Mistake Analysis</span>
+                              <span className="text-ink-muted italic">{aiData.mistake_analysis}</span>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                            {aiData.exam_tip && (
+                              <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                                <div className="text-[9px] font-bold text-accent uppercase mb-1">Exam Logic</div>
+                                <div className="text-xs text-ink-muted">{aiData.exam_tip}</div>
+                              </div>
+                            )}
+                            {aiData.deep_dive && (
+                              <div className="p-3 rounded-lg bg-elevated border border-hairline">
+                                <div className="text-[9px] font-bold text-success uppercase mb-1">Deep Dive</div>
+                                <div className="text-xs text-ink-muted">{aiData.deep_dive}</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {aiData.mini_challenge && (
+                            <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/30 border-dashed">
+                              <div className="text-[9px] font-bold text-accent uppercase mb-1">Mini Challenge</div>
+                              <div className="text-xs text-white font-medium italic">{aiData.mini_challenge}</div>
+                            </div>
+                          )}
+
+                          {aiData.status === 'retry_needed' && (
+                            <div className="mt-4 flex justify-center">
+                              <button 
+                                className="btn-primary text-xs px-6"
+                                onClick={() => {
+                                  setShowFeedback(false);
+                                  setAiData(null);
+                                }}
+                              >
+                                Try Again
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </motion.div>
+            ) : (
+              <div className="card text-center p-20">
+                <AlertTriangle size={48} className="mx-auto text-warn mb-4" />
+                <h3 className="heading-lg">Question not found</h3>
+                <p className="text-ink-muted">Something went wrong while generating this drill.</p>
+                <button className="btn-primary mt-6" onClick={() => nav('/')}>Back to Dashboard</button>
+              </div>
+            )}
           </AnimatePresence>
 
           <div className="flex items-center justify-between">
