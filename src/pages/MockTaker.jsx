@@ -55,10 +55,13 @@ export default function MockTaker() {
   const [searchParams] = useSearchParams();
   const startSection = searchParams.get('section') || 'A';
   const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : null;
+  const isFull = searchParams.get('full') === '1'; // full-section drill
   const isSmart = searchParams.get('smart') === '1';
   const smartTime = Number(searchParams.get('time') || 15);
   const smartModsRaw = searchParams.get('mods') || 'A,B,C,D';
   const smartMods = useMemo(() => smartModsRaw.split(','), [smartModsRaw]);
+  // Generate a unique key for drill results so they don't overwrite each other
+  const drillKeyRef = useRef(`drill-${Date.now()}`);
 
   const [activeSection, setActiveSection] = useState(startSection);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -79,8 +82,9 @@ export default function MockTaker() {
   const sessionIdRef = useRef(null);
   const qStartTimeRef = useRef(Date.now());
 
-  const isDrill = limit != null || isSmart;
-  const drillDurationSec = isSmart ? smartTime * 60 : (isDrill ? limit * 60 : MOCK_DURATION_MIN * 60);
+  const isDrill = limit != null || isSmart || isFull;
+  const isSectionDrill = (limit != null || isFull) && !isSmart; // single-section drill from Practice page
+  const drillDurationSec = isSmart ? smartTime * 60 : (isDrill ? (limit || 60) * 60 : MOCK_DURATION_MIN * 60);
 
   // Use a ref to store the smart-pooled questions so they are only shuffled once
   const smartPoolRef = useRef(null);
@@ -108,8 +112,10 @@ export default function MockTaker() {
       return pooled;
     }
     const list = paper.sections[activeSection] || [];
-    return limit ? list.slice(0, limit) : list;
-  }, [paper, activeSection, limit, isSmart, smartMods, smartTime]);
+    if (limit) return list.slice(0, limit);
+    if (isFull) return list; // full section drill — all questions in this section only
+    return list;
+  }, [paper, activeSection, limit, isSmart, smartMods, smartTime, isFull]);
 
   // ---- Within-mock adaptive: track per-section running accuracy and re-pool from easier/harder pool ----
   const adaptedSectionList = useMemo(() => {
@@ -155,7 +161,9 @@ export default function MockTaker() {
         drillSectionScores[code] = Math.round((modCorrect / modQs.length) * 100);
       });
 
-      recordMockAttempt(paper.id, {
+      // Use unique drill key so drills don't overwrite each other or full mock results
+      const resultKey = drillKeyRef.current;
+      recordMockAttempt(resultKey, {
         mockId: paper.id,
         score,
         marks: earned,
@@ -197,7 +205,8 @@ export default function MockTaker() {
         forced
       });
     }
-    nav(`/review/${paper.id}`);
+    // Navigate: drills use their unique key, full mocks use paper.id
+    nav(isDrill ? `/review/${drillKeyRef.current}` : `/review/${paper.id}`);
     // Finish Supabase drill session
     if (isSmart && sessionIdRef.current) {
       const c = sectionList.filter(q => answers[q.id] === q.correct).length;
@@ -228,6 +237,8 @@ export default function MockTaker() {
 
   function selectOption(idx) {
     if (showFeedback || !adaptedQ) return;
+    // In drill mode, prevent re-answering already-answered questions
+    if (isDrill && answers[adaptedQ.id] != null) return;
     const isCorrect = idx === adaptedQ.correct;
     setAnswers((a) => ({ ...a, [adaptedQ.id]: idx }));
 
@@ -296,11 +307,17 @@ export default function MockTaker() {
     setAiData(null);
   }
   function next() {
+    if (showFeedback) { gotoIndex(Math.min(adaptedSectionList.length - 1, activeIndex + 1)); return; }
     if (activeIndex < adaptedSectionList.length - 1) {
       gotoIndex(activeIndex + 1);
+    } else if (isDrill) {
+      // In drill mode: auto-show submit dialog when reaching the last question
+      setShowSubmitConfirm(true);
     } else {
+      // Full mock mode: advance to next section
       const idx = sectionOrder.indexOf(activeSection);
       if (idx < sectionOrder.length - 1) gotoSection(sectionOrder[idx + 1]);
+      else setShowSubmitConfirm(true); // Last question of last section
     }
   }
   function prev() {

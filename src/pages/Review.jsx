@@ -20,10 +20,16 @@ const filterModes = [
 export default function Review() {
   const { id } = useParams();
   const nav = useNavigate();
-  const paper = useMemo(() => getPaper(id), [id]);
   const { mockResults } = useProgress();
-  const result = mockResults[paper.id];
+
+  // Drills use unique keys like "drill-1714567890123", full mocks use paper ID like "1"
+  // Try the URL id first (for drills), then fall back to numeric paper ID (for mocks)
+  const result = mockResults[id] || mockResults[Number(id)];
   const isDrillResult = result?.isDrill;
+
+  // Load the paper from the result's mockId (drills store this), or from the URL id
+  const paperId = result?.mockId || id;
+  const paper = useMemo(() => getPaper(paperId), [paperId]);
 
   // For drills: find the actual questions from the paper that were part of the drill
   const drillQuestionIds = useMemo(() => new Set(result?.drillQuestions || []), [result]);
