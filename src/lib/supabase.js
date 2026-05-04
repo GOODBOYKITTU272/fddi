@@ -26,7 +26,17 @@ export async function persistAttempt(payload) {
   if (!supabase) return { ok: false, reason: 'no-config' };
   const { error } = await supabase
     .from('mock_attempts')
-    .insert({ device_id: deviceId(), ...payload });
+    .upsert({ 
+      id: payload.attemptId,
+      device_id: deviceId(), 
+      mock_id: payload.mockId,
+      score: payload.score || 0,
+      marks: payload.marks || 0,
+      total: payload.total || 0,
+      section_scores: payload.sectionScores || {},
+      answers: payload.answers || {},
+      forced: payload.forced || false
+    });
   if (error) return { ok: false, reason: error.message };
   return { ok: true };
 }

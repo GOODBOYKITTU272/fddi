@@ -1,24 +1,46 @@
 import { useEffect, useRef, useState } from 'react';
 
-export function useTimer(durationSec, { onExpire } = {}) {
+export function useTimer(durationSec, { onExpire, storageKey } = {}) {
   const [remaining, setRemaining] = useState(durationSec);
+  const endTimeRef = useRef(null);
   const expiredRef = useRef(false);
 
   useEffect(() => {
-    setRemaining(durationSec);
-  }, [durationSec]);
+    let savedEnd = null;
+    if (storageKey) {
+      savedEnd = sessionStorage.getItem(`timer_end_${storageKey}`);
+    }
+    
+    if (savedEnd) {
+      endTimeRef.current = parseInt(savedEnd, 10);
+    } else {
+      endTimeRef.current = Date.now() + durationSec * 1000;
+      if (storageKey) sessionStorage.setItem(`timer_end_${storageKey}`, endTimeRef.current.toString());
+    }
+    
+    expiredRef.current = false;
+  }, [durationSec, storageKey]);
 
   useEffect(() => {
-    if (remaining <= 0) {
-      if (!expiredRef.current) {
-        expiredRef.current = true;
-        onExpire?.();
+    const id = setInterval(() => {
+      if (!endTimeRef.current) return;
+      const now = Date.now();
+      const left = Math.max(0, Math.floor((endTimeRef.current - now) / 1000));
+      
+      setRemaining(left);
+      
+      if (left <= 0) {
+        clearInterval(id);
+        if (!expiredRef.current) {
+          expiredRef.current = true;
+          if (storageKey) sessionStorage.removeItem(`timer_end_${storageKey}`);
+          onExpire?.();
+        }
       }
-      return;
-    }
-    const id = setInterval(() => setRemaining((r) => r - 1), 1000);
+    }, 1000);
+
     return () => clearInterval(id);
-  }, [remaining, onExpire]);
+  }, [onExpire, storageKey]);
 
   return remaining;
 }

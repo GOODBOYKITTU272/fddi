@@ -13,6 +13,7 @@ create table if not exists public.mock_attempts (
   total        int  not null,
   section_scores jsonb not null,
   answers      jsonb not null,
+  status       text default 'completed',
   forced       bool default false,
   created_at   timestamptz default now()
 );

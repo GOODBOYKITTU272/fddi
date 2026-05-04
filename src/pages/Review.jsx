@@ -61,7 +61,11 @@ export default function Review() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center">
         <h2 className="heading-lg">No attempt found</h2>
-        <p className="text-ink-muted mt-2">Take Mock {paper.id} first to see the review.</p>
+        <p className="text-ink-muted mt-2">Could not find attempt ID: {id}</p>
+        <div className="text-xs text-ink-dim mt-4 max-h-40 overflow-auto">
+          Available attempts: {attempts.map(a => a.attemptId).join(', ') || 'None'}
+        </div>
+        <p className="text-ink-muted mt-4">Take Mock {paper.id} first to see the review.</p>
         <button className="btn-primary mt-6" onClick={() => nav(`/mock/${paper.id}`)}>Start Mock</button>
       </div>
     );
@@ -111,9 +115,11 @@ export default function Review() {
               </div>
               <div className="font-bold text-sm sm:text-base truncate">{PLAYER_NAME}&apos;s Flash Drill</div>
             </div>
-            <div className="text-right flex-shrink-0">
-              <div className="text-xl sm:text-2xl font-extrabold">{drillPct}%</div>
-              <div className="text-[10px] sm:text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
+            <div className="text-right flex-shrink-0 flex flex-col items-end">
+              <div className="text-xl sm:text-2xl font-black text-emerald-400">{drillPct}%</div>
+              <div className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] sm:text-[10px] font-bold text-emerald-300 uppercase">
+                {result.marks} / {result.total} Marks
+              </div>
             </div>
           </div>
         </header>
@@ -264,9 +270,11 @@ export default function Review() {
             <div className="text-[10px] sm:text-xs text-ink-dim uppercase tracking-[0.12em]">Review</div>
             <div className="font-bold text-sm sm:text-base truncate">{paper.title}</div>
           </div>
-          <div className="text-right flex-shrink-0">
-            <div className="text-xl sm:text-2xl font-extrabold">{Math.round(result.score)}%</div>
-            <div className="text-[10px] sm:text-xs text-ink-dim">{result.marks}/{result.total} marks</div>
+          <div className="text-right flex-shrink-0 flex flex-col items-end">
+            <div className="text-xl sm:text-2xl font-black text-accent">{Math.round(result.score)}%</div>
+            <div className="px-2 py-0.5 rounded bg-accent/10 border border-accent/20 text-[9px] sm:text-[10px] font-bold text-accent-light uppercase">
+              {result.marks} / {result.total} Marks
+            </div>
           </div>
         </div>
       </header>

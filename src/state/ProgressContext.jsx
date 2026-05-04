@@ -45,23 +45,44 @@ export function ProgressProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  const recordMockAttempt = useCallback((payload) => {
-    const attemptId = payload.attemptId || `att-${Date.now()}`;
+  const startMockAttempt = useCallback(async (payload) => {
+    const attemptId = payload.attemptId || crypto.randomUUID();
     const newAttempt = {
       ...payload,
       attemptId,
-      submittedAt: new Date().toISOString()
+      status: 'in_progress',
+      startedAt: new Date().toISOString(),
+      score: 0, marks: 0, total: 0, sectionScores: {}, answers: {}
     };
-
+    
     setState((s) => ({
       ...s,
       attempts: [...s.attempts, newAttempt]
     }));
 
-    // Async persist to Supabase
-    persistAttempt(newAttempt).then(res => {
-      if (!res.ok) console.warn('Supabase sync failed:', res.reason);
-    });
+    await persistAttempt(newAttempt).catch(() => {});
+    return attemptId;
+  }, []);
+
+  const recordMockAttempt = useCallback(async (payload) => {
+    const attemptId = payload.attemptId || crypto.randomUUID();
+    const newAttempt = {
+      ...payload,
+      attemptId,
+      status: 'completed',
+      submittedAt: new Date().toISOString()
+    };
+
+    const res = await persistAttempt(newAttempt);
+    if (!res.ok) {
+      console.warn('Supabase sync failed:', res.reason);
+      throw new Error(res.reason);
+    }
+
+    setState((s) => ({
+      ...s,
+      attempts: [...s.attempts.filter(a => a.attemptId !== attemptId), newAttempt]
+    }));
     
     return attemptId;
   }, []);
@@ -131,6 +152,7 @@ export function ProgressProvider({ children }) {
         ...state,
         sectionAccuracy,
         mockResults,
+        startMockAttempt,
         recordMockAttempt,
         resetProgress,
         readinessPct,

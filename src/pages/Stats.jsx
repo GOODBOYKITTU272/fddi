@@ -85,8 +85,10 @@ export default function Stats() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">{Math.round(m.score)}%</div>
-                  <div className="text-xs text-ink-muted">{m.marks}/{m.total} marks</div>
+                  <div className="text-xl font-black text-accent">{Math.round(m.score)}%</div>
+                  <div className="inline-block px-2 py-0.5 rounded bg-accent/10 border border-accent/20 text-[9px] font-bold text-accent-light uppercase">
+                    {m.marks} / {m.total} Marks
+                  </div>
                 </div>
               </div>
             ))}

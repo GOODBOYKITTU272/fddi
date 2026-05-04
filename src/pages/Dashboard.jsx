@@ -11,8 +11,10 @@ const sectionIcons = { A: Brain, B: BookOpen, C: Globe, D: Lightbulb };
 
 export default function Dashboard() {
   const nav = useNavigate();
-  const { sectionAccuracy, readinessPct, zone, mockResults, completedMocks } = useProgress();
+  const { sectionAccuracy, readinessPct, zone, mockResults, completedMocks, streak, overallAccuracy, attempts } = useProgress();
   const [isDrillOpen, setIsDrillOpen] = useState(false);
+  
+  const drillAttempts = [...attempts].filter(a => a.isDrill && a.status === 'completed').sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 
   const nextMock = MOCK_SCHEDULE.find((m) => !mockResults[m.id]) || MOCK_SCHEDULE[MOCK_SCHEDULE.length - 1];
 
@@ -132,31 +134,46 @@ export default function Dashboard() {
           {MOCK_SCHEDULE.map((mock) => {
             const result = mockResults[mock.id];
             const isNext = nextMock.id === mock.id;
+            const isLocked = mock.id > 1 && !mockResults[1]; 
             const duration = MOCK_DURATION_MIN; 
             const questions = TOTAL_QUESTIONS; 
 
             return (
               <motion.div
                 key={mock.id}
-                whileHover={{ y: -4 }}
-                className={`card relative flex flex-col group transition-all duration-300 ${isNext ? 'ring-accent ring-1' : ''}`}
+                whileHover={!isLocked ? { y: -4 } : {}}
+                className={`card relative flex flex-col group transition-all duration-300 ${isNext && !isLocked ? 'ring-accent ring-1' : ''} ${isLocked ? 'opacity-60 grayscale-[0.5]' : ''}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    result ? 'bg-success/10 text-success' : isNext ? 'bg-accent/10 text-accent' : 'bg-white/5 text-ink-dim'
+                    result ? 'bg-success/10 text-success' : isLocked ? 'bg-white/5 text-ink-dim' : isNext ? 'bg-accent/10 text-accent' : 'bg-white/5 text-ink-dim'
                   }`}>
-                    {result ? 'Completed' : isNext ? 'Ready' : 'Upcoming'}
+                    {result ? 'Completed' : isLocked ? 'Locked' : isNext ? 'Ready' : 'Upcoming'}
                   </div>
-                  <div className="text-ink-dim group-hover:text-accent transition-colors">
+                  <div className={`${isLocked ? 'text-ink-dim' : 'text-ink-dim group-hover:text-accent'} transition-colors`}>
                     <Award size={18} />
                   </div>
                 </div>
 
                 <h4 className="text-lg font-bold mb-1 leading-tight">{mock.title}</h4>
-                <div className="flex items-center gap-3 text-xs text-ink-muted mb-6">
+                <div className="flex items-center gap-3 text-xs text-ink-muted mb-4">
                   <span className="flex items-center gap-1"><Clock size={12} /> {duration}m</span>
                   <span className="flex items-center gap-1"><BarChart3 size={12} /> {questions} Qs</span>
                 </div>
+
+                {result && (
+                  <div className="mb-6 p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-ink-dim uppercase font-bold">Your Score</span>
+                      <span className="text-xs font-bold text-white">{Math.round(result.score)}%</span>
+                    </div>
+                    <Progress value={result.score} tone={result.score >= TARGET_SCORE_PCT ? 'success' : 'warn'} className="h-1.5 mb-2" />
+                    <div className="text-[10px] text-ink-muted flex justify-between">
+                      <span>{result.marks} / {result.total} Marks</span>
+                      <span className="font-semibold text-accent">Review Details</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-auto pt-4 border-t border-hairline flex items-center justify-between">
                   <span className="text-[11px] font-medium text-ink-dim">
@@ -164,12 +181,15 @@ export default function Dashboard() {
                   </span>
                   <button
                     className={`flex items-center gap-1 text-sm font-bold transition-all ${
-                      result || isNext ? 'text-accent hover:text-white' : 'text-ink-dim'
+                      result || (isNext && !isLocked) ? 'text-accent hover:text-white' : 'text-ink-dim'
                     }`}
-                    onClick={() => nav(result ? `/review/${result.attemptId}` : `/mock/${mock.id}`)}
-                    disabled={!result && !isNext}
+                    onClick={() => {
+                       if (result) nav(`/review/${result.attemptId}`);
+                       else if (!isLocked) nav(`/mock/${mock.id}`);
+                    }}
+                    disabled={isLocked || (!result && !isNext)}
                   >
-                    {result ? 'Review' : isNext ? 'Start Test' : 'Upcoming'}
+                    {result ? 'Review' : isLocked ? 'Complete Mock 1 First' : isNext ? 'Start Test' : 'Upcoming'}
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -178,6 +198,90 @@ export default function Dashboard() {
           })}
         </div>
       </section>
+
+      {/* Drill History */}
+      {drillAttempts.length > 0 && (
+        <section className="pb-10">
+          <div className="flex items-end justify-between mb-5">
+            <h3 className="text-2xl font-bold flex items-center gap-2">
+              <Zap className="text-accent" />
+              Flash Drill Report
+            </h3>
+            <span className="text-ink-dim text-xs sm:text-sm">Activity Log</span>
+          </div>
+
+          {/* Report Card Summary */}
+          <div className="mb-6 rounded-2xl border border-accent/20 bg-gradient-to-r from-accent/10 via-indigo-500/5 to-slate-900 p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="text-[10px] text-accent font-bold uppercase tracking-[0.15em] mb-1">Cumulative Report Card</div>
+              <div className="text-2xl sm:text-3xl font-black text-white">{drillAttempts.length} <span className="text-lg font-bold text-ink-muted">Drills</span></div>
+            </div>
+            
+            <div className="flex gap-6 sm:gap-8 bg-slate-950/40 p-4 rounded-xl border border-white/5 w-full sm:w-auto justify-around sm:justify-start">
+              <div className="text-center">
+                <div className="text-[10px] text-ink-dim uppercase tracking-wider font-bold mb-1">Avg Score</div>
+                <div className="text-xl sm:text-2xl font-black text-white">
+                  {Math.round(drillAttempts.reduce((acc, a) => acc + a.score, 0) / drillAttempts.length)}%
+                </div>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div className="text-center">
+                <div className="text-[10px] text-ink-dim uppercase tracking-wider font-bold mb-1">Total Marks</div>
+                <div className="text-xl sm:text-2xl font-black text-success">
+                  +{drillAttempts.reduce((acc, a) => acc + a.marks, 0)}
+                </div>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div className="text-center">
+                <div className="text-[10px] text-ink-dim uppercase tracking-wider font-bold mb-1">Qs Solved</div>
+                <div className="text-xl sm:text-2xl font-black text-white">
+                  {drillAttempts.reduce((acc, a) => acc + (a.drillQuestions?.length || Object.keys(a.answers || {}).length), 0)}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {drillAttempts.slice(0, 6).map((attempt) => {
+              const date = new Date(attempt.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+              return (
+                <motion.div
+                  key={attempt.attemptId}
+                  whileHover={{ y: -4 }}
+                  className="card relative flex flex-col group transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="text-[10px] text-ink-dim font-medium">{date}</div>
+                    <div className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent/10 text-accent">
+                      {Math.round(attempt.score)}% Score
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {attempt.drillModules && attempt.drillModules.map(m => (
+                      <span key={m} className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-ink-muted">
+                        {SECTIONS[m]?.short || m}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-3 border-t border-hairline flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-ink-dim flex items-center gap-1">
+                       <Award size={12}/> {attempt.marks} / {attempt.total} Marks
+                    </span>
+                    <button
+                      className="flex items-center gap-1 text-xs font-bold text-accent hover:text-white transition-colors"
+                      onClick={() => nav(`/review/${attempt.attemptId}`)}
+                    >
+                      Review <ChevronRight size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

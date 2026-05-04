@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, ChevronLeft, ChevronRight, Flag, CheckCircle2, 
-  AlertTriangle, X, Zap, Youtube, Sparkles, Rocket, Trophy, Flame, Heart, Star 
+  AlertTriangle, X, Zap, Youtube, Sparkles, Rocket, Trophy, Flame, Heart, Star, Lightbulb 
 } from 'lucide-react';
 import { getPaper } from '../data/papers.js';
 import { SECTIONS, MOCK_DURATION_MIN } from '../config.js';
@@ -13,7 +13,7 @@ import { Chip } from '../components/ui.jsx';
 import { Figure } from '../components/Figure.jsx';
 import { figureFor } from '../data/figures.js';
 import { videoForTag } from '../data/youtube.js';
-import { askExplanation } from '../lib/openai.js';
+import { askExplanation, askHint } from '../lib/openai.js';
 import { PLAYER_NAME, createDrillSession, logDrillResponse, finishDrillSession } from '../lib/supabase.js';
 
 const sectionOrder = ['A', 'B', 'C', 'D'];
@@ -50,7 +50,7 @@ export default function MockTaker() {
   const { id } = useParams();
   const nav = useNavigate();
   const paper = useMemo(() => getPaper(id), [id]);
-  const { recordMockAttempt } = useProgress();
+  const { recordMockAttempt, startMockAttempt } = useProgress();
 
   const [searchParams] = useSearchParams();
   const startSection = searchParams.get('section') || 'A';
@@ -62,16 +62,57 @@ export default function MockTaker() {
   const smartMods = useMemo(() => smartModsRaw.split(','), [smartModsRaw]);
   // Generate a unique key for drill results so they don't overwrite each other
   const drillKeyRef = useRef(`drill-${Date.now()}`);
+  const isDrill = limit != null || isSmart || isFull;
+  const sessionKey = `mock_state_${id}_${isDrill ? 'drill' : 'full'}`;
+
+  const attemptIdRef = useRef(
+    (() => {
+      const saved = sessionStorage.getItem(sessionKey);
+      if (saved && JSON.parse(saved).attemptId) return JSON.parse(saved).attemptId;
+      return crypto.randomUUID();
+    })()
+  );
 
   const [activeSection, setActiveSection] = useState(startSection);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { qid: optionIndex }
-  const [marked, setMarked] = useState(new Set());
+  const [answers, setAnswers] = useState(() => {
+    const saved = sessionStorage.getItem(sessionKey);
+    return saved ? (JSON.parse(saved).answers || {}) : {};
+  }); // { qid: optionIndex }
+  const [marked, setMarked] = useState(() => {
+    const saved = sessionStorage.getItem(sessionKey);
+    return saved && JSON.parse(saved).marked ? new Set(JSON.parse(saved).marked) : new Set();
+  });
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [aiData, setAiData] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [usedHints, setUsedHints] = useState(() => {
+    const saved = sessionStorage.getItem(sessionKey);
+    return saved && JSON.parse(saved).usedHints ? new Set(JSON.parse(saved).usedHints) : new Set();
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(sessionKey, JSON.stringify({
+      attemptId: attemptIdRef.current,
+      answers,
+      marked: Array.from(marked),
+      usedHints: Array.from(usedHints)
+    }));
+  }, [answers, marked, usedHints, sessionKey]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+  const [hintData, setHintData] = useState({});
+  const [hintLoading, setHintLoading] = useState(false);
+  const [confirmHintQid, setConfirmHintQid] = useState(null);
   const [attempts, setAttempts] = useState({}); // { qid: number }
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
@@ -81,8 +122,8 @@ export default function MockTaker() {
   const [motivationTone, setMotivationTone] = useState('success'); // 'success' | 'warn'
   const sessionIdRef = useRef(null);
   const qStartTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(new Date().toISOString());
 
-  const isDrill = limit != null || isSmart || isFull;
   const isSectionDrill = (limit != null || isFull) && !isSmart; // single-section drill from Practice page
   const drillDurationSec = isSmart ? smartTime * 60 : (isDrill ? (limit || 60) * 60 : MOCK_DURATION_MIN * 60);
 
@@ -143,12 +184,24 @@ export default function MockTaker() {
     return paper.passages?.[adaptedQ.passageRef];
   }, [adaptedQ, paper]);
 
-  const submit = useCallback((forced = false) => {
+  useEffect(() => {
+    if (!isDrill && !sessionStorage.getItem(sessionKey)) {
+      startMockAttempt({
+        attemptId: attemptIdRef.current,
+        mockId: Number(paper.id),
+      });
+    }
+  }, [isDrill, paper.id, startMockAttempt, sessionKey]);
+
+  const submit = useCallback(async (forced = false) => {
     let totalMarks = 0;
     let earnedMarks = 0;
     if (isDrill) {
-      const earned = sectionList.reduce((s, q) => s + (answers[q.id] === q.correct ? q.marks : 0), 0);
-      const total = sectionList.reduce((s, q) => s + q.marks, 0);
+      const earned = sectionList.reduce((s, q) => {
+        const penalty = usedHints.has(q.id) ? 0.5 : 1;
+        return s + (answers[q.id] === q.correct ? ((q.marks || 1) * penalty) : 0);
+      }, 0);
+      const total = sectionList.reduce((s, q) => s + (q.marks || 1), 0);
       const score = total ? (earned / total) * 100 : 0;
       
       // Build per-module scores for the drill
@@ -161,34 +214,40 @@ export default function MockTaker() {
         drillSectionScores[code] = Math.round((modCorrect / modQs.length) * 100);
       });
 
-      // Use unique attempt ID for this session
-      const attemptId = `att-${Date.now()}`;
-      recordMockAttempt({
-        attemptId,
-        mockId: Number(paper.id),
-        score,
-        marks: earned,
-        total: total,
-        sectionScores: drillSectionScores,
-        answers,
-        forced,
-        isDrill: true,
-        drillQuestions: sectionList.map(q => q.id),
-        drillModules: mods,
-        startedAt: startTimeRef.current
-      });
-      nav(`/review/${attemptId}`);
+      const attemptId = attemptIdRef.current;
+      try {
+        await recordMockAttempt({
+          attemptId,
+          mockId: Number(paper.id),
+          score,
+          marks: earned,
+          total: total,
+          sectionScores: drillSectionScores,
+          answers,
+          forced,
+          isDrill: true,
+          drillQuestions: sectionList.map(q => q.id),
+          drillModules: mods,
+          startedAt: startTimeRef.current
+        });
+        sessionStorage.removeItem(sessionKey);
+        nav(`/review/${attemptId}`);
+      } catch (err) {
+        alert("Failed to submit: " + err.message);
+      }
     } else {
       const sectionScores = {};
       sectionOrder.forEach((code) => {
         const list = paper.sections[code];
         let total = 0, earned = 0, correct = 0, attempted = 0;
         list.forEach((q) => {
-          total += q.marks;
+          const m = q.marks || (code === 'A' ? 2 : 1);
+          total += m;
           if (answers[q.id] != null) {
             attempted++;
             if (answers[q.id] === q.correct) {
-              earned += q.marks;
+              const penalty = usedHints.has(q.id) ? 0.5 : 1;
+              earned += (m * penalty);
               correct++;
             }
           }
@@ -199,19 +258,24 @@ export default function MockTaker() {
       });
       const score = totalMarks ? (earnedMarks / totalMarks) * 100 : 0;
       
-      const attemptId = `att-${Date.now()}`;
-      recordMockAttempt({
-        attemptId,
-        mockId: Number(paper.id),
-        score,
-        marks: earnedMarks,
-        total: totalMarks,
-        sectionScores,
-        answers,
-        forced,
-        startedAt: startTimeRef.current
-      });
-      nav(`/review/${attemptId}`);
+      const attemptId = attemptIdRef.current;
+      try {
+        await recordMockAttempt({
+          attemptId,
+          mockId: Number(paper.id),
+          score,
+          marks: earnedMarks,
+          total: totalMarks,
+          sectionScores,
+          answers,
+          forced,
+          startedAt: startTimeRef.current
+        });
+        sessionStorage.removeItem(sessionKey);
+        nav(`/review/${attemptId}`);
+      } catch (err) {
+        alert("Failed to submit: " + err.message);
+      }
     }
     // Finish Supabase drill session
     if (isSmart && sessionIdRef.current) {
@@ -223,7 +287,8 @@ export default function MockTaker() {
   }, [answers, paper, nav, recordMockAttempt, isDrill, sectionList, activeSection, isSmart, bestStreak]);
 
   const remaining = useTimer(drillDurationSec, {
-    onExpire: () => submit(true)
+    onExpire: () => submit(true),
+    storageKey: sessionKey
   });
 
   // Create Supabase drill session on mount (for smart drills)
@@ -512,6 +577,17 @@ export default function MockTaker() {
                       </button>
                     )}
                     <button
+                      onClick={() => {
+                        if (hintData[adaptedQ.id]) return;
+                        setConfirmHintQid(adaptedQ.id);
+                      }}
+                      disabled={hintLoading || hintData[adaptedQ.id]}
+                      className={'btn-primary bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 text-xs px-3 py-1.5 ' + (usedHints.has(adaptedQ.id) ? 'opacity-50' : '')}
+                    >
+                      <Lightbulb size={14} className="mr-1" />
+                      {hintLoading ? 'Thinking...' : 'Process Hint (-50%)'}
+                    </button>
+                    <button
                       onClick={toggleMark}
                       className={'btn-ghost text-xs px-3 py-1.5 ' + (marked.has(adaptedQ.id) ? 'text-warn' : '')}
                     >
@@ -520,6 +596,22 @@ export default function MockTaker() {
                     </button>
                   </div>
                 </div>
+
+                {hintData[adaptedQ.id] && (
+                  <div className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-amber-200/90 space-y-3">
+                    <div className="font-bold flex items-center gap-1 text-amber-400 text-xs uppercase"><Lightbulb size={14}/> AI Hint</div>
+                    <div className="space-y-2">
+                      {hintData[adaptedQ.id].hint1 && <p><span className="font-semibold text-amber-500">Hint 1:</span> {hintData[adaptedQ.id].hint1}</p>}
+                      {hintData[adaptedQ.id].hint2 && <p><span className="font-semibold text-amber-500">Hint 2:</span> {hintData[adaptedQ.id].hint2}</p>}
+                      {hintData[adaptedQ.id].hint3 && <p><span className="font-semibold text-amber-500">Hint 3:</span> {hintData[adaptedQ.id].hint3}</p>}
+                      {hintData[adaptedQ.id].common_mistake && (
+                        <div className="mt-3 p-2 rounded bg-amber-500/20 text-xs text-amber-100">
+                          <span className="font-bold text-amber-400">Watch out: </span>{hintData[adaptedQ.id].common_mistake}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">{adaptedQ.text}</p>
 
@@ -767,6 +859,42 @@ export default function MockTaker() {
             <div className="mt-6 flex gap-2 justify-center">
               <button className="btn-secondary" onClick={() => setShowExitConfirm(false)}>Stay</button>
               <button className="btn-primary" onClick={() => nav('/')}>Exit anyway</button>
+            </div>
+          </Modal>
+        )}
+        {confirmHintQid && (
+          <Modal onClose={() => setConfirmHintQid(null)}>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center mx-auto mb-3">
+                <Lightbulb size={22} />
+              </div>
+              <h3 className="heading-md">Are you sure?</h3>
+              <p className="text-ink-muted text-sm mt-2 max-w-sm mx-auto">
+                Using a hint will cost you <strong>50% of the marks</strong> for this question if you answer correctly.
+              </p>
+              <div className="mt-6 flex gap-2 justify-center">
+                <button className="btn-secondary" onClick={() => setConfirmHintQid(null)}>Cancel</button>
+                <button 
+                  className="btn-primary bg-amber-500 hover:bg-amber-600 text-white border-none" 
+                  onClick={async () => {
+                    const qid = confirmHintQid;
+                    setConfirmHintQid(null);
+                    setHintLoading(true);
+                    const res = await askHint({ question: adaptedQ.text, options: adaptedQ.options, section: activeSection, tag: adaptedQ.tag });
+                    if (res.ok && res.data) {
+                      setHintData(prev => ({ ...prev, [qid]: res.data }));
+                      setUsedHints(prev => {
+                        const next = new Set(prev);
+                        next.add(qid);
+                        return next;
+                      });
+                    }
+                    setHintLoading(false);
+                  }}
+                >
+                  <Lightbulb size={16} /> Show Hint
+                </button>
+              </div>
             </div>
           </Modal>
         )}
