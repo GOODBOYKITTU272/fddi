@@ -11,7 +11,7 @@ export default [
   // Vocabulary - Synonyms
   q('3B06', 'B', 'Synonym of _Abundant_:', ['Scarce', 'Plentiful', 'Rare', 'Limited'], 2, 'Abundant means existing in large quantities.', { tag: 'Synonyms' }),
   q('3B07', 'B', 'Synonym of _Candid_:', ['Dishonest', 'Frank', 'Secretive', 'Vague'], 2, 'Candid means truthful and straightforward.', { tag: 'Synonyms' }),
-  q('3B08', 'B', 'Synonym of _Diligent_:', ['Lazy', 'Hard-working', 'Careless', 'Slow'], 2, 'Diligent means showing care and effort in one\'s work.', { tag: 'Synonyms' }),
+  q('3B08', 'B', 'Synonym of _Tenacious_:', ['Weak', 'Persistent', 'Timid', 'Feeble'], 2, 'Tenacious means holding firm to a purpose or belief.', { tag: 'Synonyms' }),
   q('3B09', 'B', 'Synonym of _Exuberant_:', ['Depressed', 'Energetic', 'Quiet', 'Small'], 2, 'Exuberant means full of energy and excitement.', { tag: 'Synonyms' }),
   q('3B10', 'B', 'Synonym of _Frugal_:', ['Extravagant', 'Economical', 'Wasteful', 'Generous'], 2, 'Frugal means simple and plain and costing little.', { tag: 'Synonyms' }),
 
@@ -33,7 +33,7 @@ export default [
   q('3B21', 'B', 'Idiom meaning: _Beat around the bush_', ['To cut trees', 'To avoid the main topic', 'To hunt', 'To be late'], 2, 'To talk about unimportant things to avoid a difficult subject.', { tag: 'Idioms' }),
   q('3B22', 'B', 'Idiom meaning: _Burn the midnight oil_', ['To use oil lamps', 'To work late into the night', 'To waste energy', 'To be an early riser'], 2, 'To work or study very late.', { tag: 'Idioms' }),
   q('3B23', 'B', 'Idiom meaning: _Hit the nail on the head_', ['To be a carpenter', 'To say something exactly right', 'To make a mistake', 'To be violent'], 2, 'To describe exactly what is causing a situation or problem.', { tag: 'Idioms' }),
-  q('3B24', 'B', 'Idiom meaning: _Blessing in disguise_', ['A bad thing that turns out good', 'A secret gift', 'A religious prayer', 'A mask'], 1, 'Something that seems bad at first but results in something good happening later.', { tag: 'Idioms' }),
+  q('3B24', 'B', 'Idiom meaning: _Spill the beans_', ['Cook something', 'Reveal a secret', 'Make a mess', 'Plant a garden'], 2, 'To reveal confidential information.', { tag: 'Idioms' }),
   q('3B25', 'B', 'Idiom meaning: _Once in a blue moon_', ['Frequently', 'Very rarely', 'Every month', 'At night'], 2, 'Something that happens very seldom.', { tag: 'Idioms' }),
 
   // Spelling
@@ -44,24 +44,24 @@ export default [
   q('3B30', 'B', 'Correct Spelling:', ['Miscellaneous', 'Miscelaneous', 'Miscellanous', 'Miscelanous'], 1, 'Miscellaneous.', { tag: 'Spelling' }),
 
   // Fillers
-  q('3B31', 'B', 'The plane took ___ on time.', ['off', 'up', 'out', 'away'], 1, 'Take off.', { tag: 'RC Strategy' }),
+  q('3B31', 'B', 'She takes ___ her mother in looks.', ['after', 'up', 'off', 'out'], 1, 'Take after means to resemble.', { tag: 'RC Strategy' }),
   q('3B32', 'B', 'She is married ___ a doctor.', ['to', 'with', 'by', 'at'], 1, 'Married to someone.', { tag: 'RC Strategy' }),
   q('3B33', 'B', 'The bridge was destroyed ___ the flood.', ['by', 'with', 'from', 'at'], 1, 'Passive voice with "by".', { tag: 'RC Strategy' }),
   q('3B34', 'B', 'He congratulated me ___ my success.', ['on', 'for', 'at', 'with'], 1, 'Congratulate on something.', { tag: 'RC Strategy' }),
-  q('3B35', 'B', 'I prefer tea ___ coffee.', ['to', 'than', 'over', 'by'], 1, 'Prefer A to B.', { tag: 'RC Strategy' }),
+  q('3B35', 'B', 'He insisted ___ seeing the manager.', ['on', 'for', 'at', 'with'], 1, 'Insist on doing something.', { tag: 'RC Strategy' }),
   // One Word Substitution
   q('3B36', 'B', 'A place where bees are kept:', ['Apiary', 'Aviary', 'Aquarium', 'Zoo'], 1, 'Apiary.', { tag: 'One-word Sub' }),
   q('3B37', 'B', 'One who is present everywhere:', ['Omnipotent', 'Omnipresent', 'Omniscient', 'Universal'], 2, 'Omnipresent.', { tag: 'One-word Sub' }),
   q('3B38', 'B', 'A person who hates mankind:', ['Misanthrope', 'Philanthropist', 'Misogynist', 'Polyglot'], 1, 'Misanthrope.', { tag: 'One-word Sub' }),
   q('3B39', 'B', 'Handwriting that cannot be read:', ['Illegible', 'Eligible', 'Incredible', 'Invisible'], 1, 'Illegible.', { tag: 'One-word Sub' }),
-  q('3B40', 'B', 'A person who does not believe in God:', ['Theist', 'Atheist', 'Agnostic', 'Spiritual'], 2, 'Atheist.', { tag: 'One-word Sub' }),
+  q('3B40', 'B', 'A person who speaks many languages:', ['Linguist', 'Polyglot', 'Bilingual', 'Translator'], 2, 'Polyglot.', { tag: 'One-word Sub' }),
 
   // Para-jumbles
   q('3B41', 'B', 'Arrange: A. Harvest, B. Sowing, C. Irrigation, D. Plowing.', ['DBCA', 'DBAC', 'ABCD', 'DCBA'], 1, 'Plowing (D) -> Sowing (B) -> Irrigation (C) -> Harvest (A).', { tag: 'Para-Jumbles' }),
   q('3B42', 'B', 'Arrange: A. Printing, B. Editing, C. Writing, D. Publishing.', ['CBAD', 'CABD', 'BCAD', 'ACBD'], 1, 'Writing (C) -> Editing (B) -> Printing (A) -> Publishing (D).', { tag: 'Para-Jumbles' }),
   q('3B43', 'B', 'Arrange: A. Interview, B. Advertisement, C. Selection, D. Application.', ['BDAC', 'BADC', 'ADBC', 'DBAC'], 2, 'Advertisement (B) -> Application (D) -> Interview (A) -> Selection (C).', { tag: 'Para-Jumbles' }),
   q('3B44', 'B', 'Arrange: A. Diagnosis, B. Treatment, C. Symptoms, D. Recovery.', ['CABD', 'CBAD', 'ABCD', 'DBAC'], 1, 'Symptoms (C) -> Diagnosis (A) -> Treatment (B) -> Recovery (D).', { tag: 'Para-Jumbles' }),
-  q('3B45', 'B', 'Arrange: A. Dinner, B. Cooking, C. Shopping, D. Washing dishes.', ['CBAD', 'CABD', 'BACD', 'DBAC'], 1, 'Shopping (C) -> Cooking (B) -> Dinner (A) -> Washing dishes (D).', { tag: 'Para-Jumbles' }),
+  q('3B45', 'B', 'Arrange: A. Baking, B. Mixing ingredients, C. Buying flour, D. Serving cake.', ['CBAD', 'BCAD', 'ABCD', 'DCBA'], 1, 'Buying flour (C) -> Mixing (B) -> Baking (A) -> Serving cake (D).', { tag: 'Para-Jumbles' }),
 
   // Sentence Improvement
   q('3B46', 'B', 'Improve: No sooner _he had arrived_ than it started raining.', ['had he arrived', 'he arrived', 'was he arrived', 'no improvement'], 1, 'Inversion after negative adverbs (No sooner had he...).', { tag: 'RC Strategy' }),

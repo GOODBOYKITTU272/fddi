@@ -115,7 +115,7 @@ export default function Dashboard() {
           </div>
           <Progress value={readinessPct} tone="success" className="h-2 mb-4" />
           <p className="text-[11px] text-ink-muted leading-relaxed">
-            Based on your mock performance, you are currently in the <span className="text-white font-bold">{zone} Zone</span>. Keep practicing Section {Object.entries(sectionAccuracy).sort((a,b) => a[1]-b[1])[0]?.[0] || 'D'} to improve.
+            Based on your mock performance, you are currently in the <span className="text-white font-bold">{zone}</span>. Keep practicing Section {Object.entries(sectionAccuracy).sort((a,b) => a[1]-b[1])[0]?.[0] || 'D'} to improve.
           </p>
         </Card>
       </section>

@@ -41,17 +41,17 @@ export default [
   q('5B27', 'B', 'Correct Spelling:', ['Calendar', 'Calender', 'Calendur', 'Calandur'], 1, 'Calendar.', { tag: 'Spelling' }),
   q('5B28', 'B', 'Correct Spelling:', ['Committee', 'Comittee', 'Commitee', 'Comite'], 1, 'Committee.', { tag: 'Spelling' }),
   q('5B29', 'B', 'Correct Spelling:', ['Bureaucracy', 'Burocracy', 'Bureaucrasy', 'Burocrasy'], 1, 'Bureaucracy.', { tag: 'Spelling' }),
-  q('5B30', 'B', 'Correct Spelling:', ['Maintenance', 'Maintainance', 'Maintenence', 'Maintenence'], 1, 'Maintenance.', { tag: 'Spelling' }),
+  q('5B30', 'B', 'Correct Spelling:', ['Conscientious', 'Conscientous', 'Conscentious', 'Consicentious'], 1, 'Conscientious.', { tag: 'Spelling' }),
 
   // Fillers
   q('5B31', 'B', 'He is fond ___ music.', ['of', 'for', 'with', 'at'], 1, 'Fond of.', { tag: 'Fillers' }),
   q('5B32', 'B', 'The book belongs ___ me.', ['to', 'with', 'at', 'on'], 1, 'Belongs to.', { tag: 'Fillers' }),
   q('5B33', 'B', 'She was born ___ 1995.', ['in', 'on', 'at', 'into'], 1, 'In a year.', { tag: 'Fillers' }),
   q('5B34', 'B', 'He went to school ___ foot.', ['on', 'by', 'at', 'with'], 1, 'On foot.', { tag: 'Fillers' }),
-  q('5B35', 'B', 'I prefer tea ___ coffee.', ['to', 'than', 'over', 'at'], 1, 'Prefer...to.', { tag: 'Fillers' }),
+  q('5B35', 'B', 'She is looking forward ___ the results.', ['to', 'for', 'at', 'on'], 1, 'Look forward to.', { tag: 'Fillers' }),
 
   // One Word
-  q('5B36', 'B', 'A person who does not believe in God:', ['Atheist', 'Theist', 'Agnostic', 'Pagan'], 1, 'Atheist.', { tag: 'One-word Sub' }),
+  q('5B36', 'B', 'A person who walks in their sleep:', ['Insomniac', 'Somnambulist', 'Narcoleptic', 'Hypnotist'], 2, 'Somnambulist.', { tag: 'One-word Sub' }),
   q('5B37', 'B', 'A study of insects:', ['Entomology', 'Etymology', 'Zoology', 'Biology'], 1, 'Entomology.', { tag: 'One-word Sub' }),
   q('5B38', 'B', 'One who looks at the bright side:', ['Optimist', 'Pessimist', 'Stoic', 'Cynic'], 1, 'Optimist.', { tag: 'One-word Sub' }),
   q('5B39', 'B', 'Killing of a king:', ['Regicide', 'Homicide', 'Genocide', 'Suicide'], 1, 'Regicide.', { tag: 'One-word Sub' }),
@@ -60,7 +60,7 @@ export default [
   // Para-jumbles
   q('5B41', 'B', 'Arrange: A. Result, B. Exam, C. Application, D. Study.', ['CDAB', 'CDBA', 'ABCD', 'DBAC'], 2, 'Application (C) -> Study (D) -> Exam (B) -> Result (A).', { tag: 'Para-Jumbles' }),
   q('5B42', 'B', 'Arrange: A. Payment, B. Delivery, C. Order, D. Selection.', ['DABC', 'DCAB', 'DCAB', 'ABCD'], 2, 'Selection (D) -> Order (C) -> Payment (A) -> Delivery (B).', { tag: 'Para-Jumbles' }),
-  q('5B43', 'B', 'Arrange: A. Idea, B. Funding, C. Launch, D. Prototype.', ['ADBC', 'ADCB', 'ABCD', 'DBAC'], 2, 'Idea (A) -> Prototype (D) -> Funding (B) -> Launch (C).', { tag: 'Para-Jumbles' }),
+  q('5B43', 'B', 'Arrange: A. Graduation, B. Admission, C. School, D. Employment.', ['CBAD', 'BCAD', 'ABCD', 'DCBA'], 1, 'School (C) -> Admission (B) -> Graduation (A) -> Employment (D).', { tag: 'Para-Jumbles' }),
   q('5B44', 'B', 'Arrange: A. Thread, B. Fabric, C. Cotton, D. Shirt.', ['CABD', 'CBAD', 'ABCD', 'DBCA'], 1, 'Cotton (C) -> Thread (A) -> Fabric (B) -> Shirt (D).', { tag: 'Para-Jumbles' }),
   q('5B45', 'B', 'Arrange: A. Soil, B. Seed, C. Water, D. Tree.', ['ABCD', 'BACD', 'BACD', 'BCAD'], 2, 'Soil (A) -> Seed (B) -> Water (C) -> Tree (D).', { tag: 'Para-Jumbles' }),
 

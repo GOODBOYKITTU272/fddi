@@ -18,7 +18,7 @@ export default [
   // Antonyms
   q('6B11', 'B', 'Antonym of Inclusive:', ['Broad', 'Exclusive', 'Fast', 'Loud'], 2, 'Exclusive is the opposite.', { tag: 'Antonyms' }),
   q('6B12', 'B', 'Antonym of Vital:', ['Crucial', 'Trivial/Unimportant', 'Fast', 'Loud'], 2, 'Trivial.', { tag: 'Antonyms' }),
-  q('6B13', 'B', 'Antonym of Seamless:', ['Smooth', 'Fragmented', 'Fast', 'Loud'], 2, 'Fragmented/Disjointed.', { tag: 'Antonyms' }),
+  q('6B13', 'B', 'Antonym of Eloquent:', ['Fluent', 'Inarticulate', 'Loud', 'Sharp'], 2, 'Inarticulate is the opposite.', { tag: 'Antonyms' }),
   q('6B14', 'B', 'Antonym of Accessibility:', ['Availability', 'Inaccessibility', 'Fast', 'Loud'], 2, 'Inaccessibility.', { tag: 'Antonyms' }),
   q('6B15', 'B', 'Antonym of Diversity:', ['Variety', 'Uniformity', 'Fast', 'Loud'], 2, 'Uniformity is the opposite.', { tag: 'Antonyms' }),
 
@@ -41,12 +41,12 @@ export default [
   q('6B27', 'B', 'Correct Spelling:', ['Hierarchy', 'Heirarchy', 'Hierachy', 'Heirachy'], 1, 'Hierarchy.', { tag: 'Spelling' }),
   q('6B28', 'B', 'Correct Spelling:', ['Millennium', 'Millenium', 'Milennium', 'Milenium'], 1, 'Millennium.', { tag: 'Spelling' }),
   q('6B29', 'B', 'Correct Spelling:', ['Sovereignty', 'Soverignty', 'Soveriegnty', 'Sovereigntie'], 1, 'Sovereignty.', { tag: 'Spelling' }),
-  q('6B30', 'B', 'Correct Spelling:', ['Entrepreneur', 'Enterpreneur', 'Entreprenuer', 'Enterprenuer'], 1, 'Entrepreneur.', { tag: 'Spelling' }),
+  q('6B30', 'B', 'Correct Spelling:', ['Surveillance', 'Surveilance', 'Survellance', 'Surveliance'], 1, 'Surveillance.', { tag: 'Spelling' }),
 
   // Fillers
   q('6B31', 'B', 'He is addicted ___ coffee.', ['to', 'with', 'for', 'at'], 1, 'Addicted to.', { tag: 'Fillers' }),
   q('6B32', 'B', 'She is good ___ dancing.', ['at', 'in', 'on', 'with'], 1, 'Good at.', { tag: 'Fillers' }),
-  q('6B33', 'B', 'The plane took ___ on time.', ['off', 'on', 'up', 'down'], 1, 'Take off.', { tag: 'Fillers' }),
+  q('6B33', 'B', 'He ran ___ the thief but could not catch him.', ['after', 'behind', 'to', 'for'], 1, 'Run after means to chase.', { tag: 'Fillers' }),
   q('6B34', 'B', 'He is consistent ___ his efforts.', ['in', 'with', 'at', 'on'], 1, 'Consistent in.', { tag: 'Fillers' }),
   q('6B35', 'B', 'We agree ___ this point.', ['on', 'to', 'with', 'at'], 1, 'Agree on.', { tag: 'Fillers' }),
 
@@ -61,8 +61,8 @@ export default [
   q('6B41', 'B', 'Arrange: A. Print, B. Layout, C. Type, D. Distribute.', ['CBAD', 'CABD', 'BCAD', 'ACBD'], 1, 'Type (C) -> Layout (B) -> Print (A) -> Distribute (D).', { tag: 'Para-Jumbles' }),
   q('6B42', 'B', 'Arrange: A. Login, B. OTP, C. Register, D. Dashboard.', ['CABD', 'CBAD', 'ACBD', 'BACD'], 1, 'Register (C) -> Login (A) -> OTP (B) -> Dashboard (D).', { tag: 'Para-Jumbles' }),
   q('6B43', 'B', 'Arrange: A. Interview, B. Selection, C. Ad, D. Application.', ['CADB', 'CBDA', 'CDAB', 'ABCD'], 3, 'Ad (C) -> Application (D) -> Interview (A) -> Selection (B).', { tag: 'Para-Jumbles' }),
-  q('6B44', 'B', 'Arrange: A. Harvest, B. Sow, C. Plough, D. Market.', ['CBAD', 'BCAD', 'CABD', 'DBAC'], 1, 'Plough (C) -> Sow (B) -> Harvest (A) -> Market (D).', { tag: 'Para-Jumbles' }),
-  q('6B45', 'B', 'Arrange: A. Idea, B. Funding, C. Launch, D. Prototype.', ['ADBC', 'ADCB', 'ABCD', 'DBAC'], 2, 'Idea (A) -> Prototype (D) -> Funding (B) -> Launch (C).', { tag: 'Para-Jumbles' }),
+  q('6B44', 'B', 'Arrange: A. Dispatch, B. Packing, C. Manufacturing, D. Quality Check.', ['CDBA', 'CBDA', 'ABCD', 'DCBA'], 1, 'Manufacturing (C) -> Quality Check (D) -> Packing (B) -> Dispatch (A).', { tag: 'Para-Jumbles' }),
+  q('6B45', 'B', 'Arrange: A. Flight, B. Booking, C. Packing, D. Reaching airport.', ['BCDA', 'CBDA', 'ABCD', 'DCBA'], 1, 'Booking (B) -> Packing (C) -> Reaching airport (D) -> Flight (A).', { tag: 'Para-Jumbles' }),
 
   // Sentence Improvement
   q('6B46', 'B', 'Improve: She _is_ more taller than her sister.', ['is taller', 'is more tall', 'is tall', 'no improvement'], 1, 'Avoid double comparative.', { tag: 'Sentence Improvement' }),
